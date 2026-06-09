@@ -1,0 +1,2840 @@
+
+
+
+
+
+
+
+
+
+
+[LOGOTIPO DA EMPRESA]
+
+
+
+
+
+
+
+PGRTR
+
+Programa de Gerenciamento de Riscos no Trabalho Rural
+
+
+
+
+
+
+
+
+
+Razão Social:
+
+[RAZÃO SOCIAL DA EMPRESA]
+
+CNPJ: [XX.XXX.XXX/XXXX-XX]
+
+
+
+
+
+
+
+
+
+Data de Emissão: [DD/MM/AAAA]
+
+
+
+SUMÁRIO
+
+1. INTRODUÇÃO	...
+
+2. IDENTIFICAÇÃO DO EMPREGADOR RURAL	...
+
+18. INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)	...
+
+19. MATRIZ DE EPI POR FUNÇÃO	...
+
+20. MATRIZ DE TREINAMENTOS	...
+
+21. MATRIZ DE DOCUMENTOS	...
+
+22. PROCEDIMENTOS NO TRABALHO COM ANIMAIS	...
+
+23. AGROTÓXICOS NO PGRTR	...
+
+24. CONDIÇÕES CLIMÁTICAS ADVERSAS	...
+
+25. TRABALHO PENOSO	...
+
+26. TRABALHO EM ZONA DE RISCO ELÉTRICO	...
+
+27. CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR	...
+
+28. GESTÃO DE RESÍDUOS	...
+
+29. ACIDENTES DE TRABALHO	...
+
+30. DIRETRIZES DA MEDICINA OCUPACIONAL	...
+
+31. TIPOS DE EXAMES OCUPACIONAIS	...
+
+32. PLANO DE VACINAÇÃO	...
+
+33. AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR	...
+
+34. MATERIAIS PARA PRIMEIROS SOCORROS	...
+
+35. ASO – ATESTADO DE SAÚDE OCUPACIONAL	...
+
+36. PLANEJAMENTO DOS EXAMES OCUPACIONAIS	...
+
+37. DANOS À SAÚDE	...
+
+38. CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO	...
+
+39. PLANO ANUAL DE AÇÕES	...
+
+40. ENCERRAMENTO	...
+
+
+
+1. INTRODUÇÃO
+
+De acordo com a Portaria SEPRT nº 22.677, de outubro de 2020 com início de vigência em 27 de outubro de 2021 regulamentada pela NR 31, passa a ser obrigatório que os empregadores rurais mantenham atualizados o PGRTR – Programa de Gerenciamento de Riscos no Trabalho Rural.
+
+O PGRTR contém o Inventário Geral dos Riscos e Planilhas de Exames Ocupacionais relacionados às atividades existentes no empregador rural, contemplando o reconhecimento e a avaliação dos riscos físicos, químicos, biológicos, ergonômicos e mecânicos em atendimento da NR principal (NR 31) e das complementares NR 01, NR 07, NR 09 e NR 17.
+
+
+
+2. IDENTIFICAÇÃO DO EMPREGADOR RURAL
+
+
+
+DADOS CADASTRAIS DA EMPRESA
+
+Razão Social
+
+[RAZÃO SOCIAL]
+
+Nome Fantasia
+
+[NOME FANTASIA]
+
+CNPJ
+
+[XX.XXX.XXX/XXXX-XX]
+
+Endereço
+
+[RUA, Nº – BAIRRO / ZONA]
+
+CEP
+
+[XXXXX-XXX]
+
+Bairro
+
+[BAIRRO]
+
+Cidade
+
+[CIDADE]
+
+UF
+
+[UF]
+
+Telefone
+
+[(XX) XXXX-XXXX]
+
+E-mail
+
+[email@empresa.com.br]
+
+
+
+DADOS DO REPRESENTANTE LEGAL
+
+Nome Completo
+
+[NOME DO REPRESENTANTE LEGAL]
+
+
+
+ATIVIDADE ECONÔMICA PRINCIPAL
+
+CNAE Principal
+
+[XX.XX-X/XX]
+
+Atividade
+
+[DESCRIÇÃO DA ATIVIDADE ECONÔMICA]
+
+Grau de Risco
+
+[1, 2, 3 ou 4]
+
+
+
+QUADRO DE FUNCIONÁRIOS DA EMPRESA
+
+ID
+
+Setor
+
+Função
+
+Nº Funcionários
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DESCRIÇÃO DOS AMBIENTES DE TRABALHO
+
+Setor / Ambiente
+
+Descrição
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RELAÇÃO DE FUNÇÕES POR AMBIENTE DE TRABALHO
+
+Ambiente de Trabalho
+
+Funções
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18. INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)
+
+Para obtenção do inventário de riscos global da empresa foram avaliadas todas as funções mediante reconhecimento e avaliação da exposição aos riscos ocupacionais atrelados às atividades desenvolvidas pelo cargo e ambientes de trabalho. Uma planilha por GHE (Grupo Homogêneo de Exposição) está apresentada abaixo.
+
+
+
+GHE 01 – [NOME DO SETOR / GRUPO HOMOGÊNEO]
+
+Setor:
+
+[SETOR]
+
+Função:
+
+[FUNÇÃO]
+
+Descrição das Atividades:
+
+[Descreva as atividades realizadas nesta função/setor]
+
+Agente de Risco
+
+Fator de Risco
+
+Fonte Geradora (Perigo)
+
+Frequência / Exposição
+
+Avaliações Quantitativas
+
+Medidas de Controle Existentes
+
+Metodologia
+
+Matriz de Risco
+
+Trajetória
+
+Atividade
+
+Norma
+
+Nível Ação
+
+Resultado
+
+Técnica Usada
+
+Descrição das Medidas
+
+Eficaz S/N
+
+Probabilidade
+
+Severidade
+
+Classif.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+GHE 02 – [NOME DO SETOR / GRUPO HOMOGÊNEO]
+
+Setor:
+
+[SETOR]
+
+Função:
+
+[FUNÇÃO]
+
+Descrição das Atividades:
+
+[Descreva as atividades realizadas nesta função/setor]
+
+Agente de Risco
+
+Fator de Risco
+
+Fonte Geradora (Perigo)
+
+Frequência / Exposição
+
+Avaliações Quantitativas
+
+Medidas de Controle Existentes
+
+Metodologia
+
+Matriz de Risco
+
+Trajetória
+
+Atividade
+
+Norma
+
+Nível Ação
+
+Resultado
+
+Técnica Usada
+
+Descrição das Medidas
+
+Eficaz S/N
+
+Probabilidade
+
+Severidade
+
+Classif.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+GHE 03 – [NOME DO SETOR / GRUPO HOMOGÊNEO]
+
+Setor:
+
+[SETOR]
+
+Função:
+
+[FUNÇÃO]
+
+Descrição das Atividades:
+
+[Descreva as atividades realizadas nesta função/setor]
+
+Agente de Risco
+
+Fator de Risco
+
+Fonte Geradora (Perigo)
+
+Frequência / Exposição
+
+Avaliações Quantitativas
+
+Medidas de Controle Existentes
+
+Metodologia
+
+Matriz de Risco
+
+Trajetória
+
+Atividade
+
+Norma
+
+Nível Ação
+
+Resultado
+
+Técnica Usada
+
+Descrição das Medidas
+
+Eficaz S/N
+
+Probabilidade
+
+Severidade
+
+Classif.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Recomendação de Novas Medidas de Controle:
+
+
+
+
+
+19. MATRIZ DE EPI POR FUNÇÃO
+
+
+
+MATRIZ DE EPI POR FUNÇÃO
+
+Função
+
+Avental Impermeável
+
+Boné árabe
+
+Bota de Couro
+
+Bota Impermeável
+
+Cinto de Segurança
+
+Kit Pulverização
+
+Luva Malha de Aço
+
+Luva Química
+
+Luva de Vaqueta
+
+Luva Impermeável
+
+Luva Tricotada
+
+Manguito Solar
+
+Máscara Filtro Carbono
+
+Protetor Auricular
+
+Capacete de Segurança
+
+Respirador PFF2
+
+Óculos de Proteção
+
+Vestimenta RF
+
+Apicultor
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Assistente Administrativo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de agrotóxico
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de almoxarifado
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de campo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de escritório
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de packing house
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Auxiliar de serviços gerais
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Borracheiro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cozinheiro(a)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eletricista
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Irrigador
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Irrigador – Aplic. fertilizante
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Mecânico
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Motorista de ônibus
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pedreiro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Porteiro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Servente
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Técnico agrícola
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Técnico de SST
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trabalhador rural – Campo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trabalhador rural – Expedição
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trabalhador rural – Packing house
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trabalhador rural – Pincelamento
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trabalhador rural – Pulverização
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tratorista
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tratorista – Pulverização
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Vaqueiro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20. MATRIZ DE TREINAMENTOS
+
+
+
+TREINAMENTOS APLICÁVEIS
+
+Descrição do Treinamento
+
+Funções / Atividades
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+21. MATRIZ DE DOCUMENTOS
+
+
+
+DOCUMENTOS OBRIGATÓRIOS
+
+Descrição do Documento
+
+Norma de Referência
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22. PROCEDIMENTOS NO TRABALHO COM ANIMAIS
+
+Para o empregador rural que possui trabalho com animais ou manipulação e eliminação de secreções, excreções e restos de animais, deverá ter anexo ao presente PGRTR os procedimentos específicos destas tarefas com as indicações das respectivas medidas de proteção e as formas corretas e locais adequados de aproximação, contato e imobilização, e reconhecimento e precauções relativas a doenças transmissíveis.
+
+
+
+23. AGROTÓXICOS NO PGRTR
+
+Para todos os trabalhadores envolvidos em trabalhos com agrotóxicos é obrigatório o banho após finalizadas todas as atividades envolvendo o preparo e/ou aplicação de agrotóxicos, aditivos, adjuvantes e produtos afins. Todos os procedimentos para manuseio deverão constar em anexo ao presente PGRTR.
+
+
+
+24. CONDIÇÕES CLIMÁTICAS ADVERSAS
+
+Para as situações abaixo o SESTR e/ou gerência da empresa deverá realizar análise de risco pontual para verificação da necessidade de interrupção das atividades, valendo salientar que sempre que a segurança e saúde do trabalhador for comprometida, o mesmo poderá exercer o seu direito de recusa.
+
+• Em dias de chuva intensa avaliar condições do solo para verificação de estabilidade e irregularidade;
+
+• Avaliar relâmpagos e trovões nos locais próximo a subestações elétricas e em campo aberto;
+
+• Nas situações de calor extremo avaliar pausas periódicas para os trabalhadores para descanso e hidratação.
+
+
+
+
+
+25. TRABALHO PENOSO
+
+O empregador rural em articulação com o PGRTR e AET deverá realizar a organização do trabalho considerando possíveis pausas e também de forma que as atividades que exijam maior esforço físico, quando possível, sejam desenvolvidas no período da manhã ou no final da tarde, para minimização dos impactos sobre a segurança e saúde do trabalhador nas atividades em terrenos acidentados.
+
+
+
+26. TRABALHO EM ZONA DE RISCO ELÉTRICO
+
+O empregador deverá definir e sinalizar o perímetro da zona de risco, permitindo o acesso apenas de colaboradores capacitados na NR 10 mediante análise de risco específica e emissão de permissão de trabalho (PT).
+
+
+
+27. CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR
+
+O empregador rural com o suporte do SESTR deverá dispor de condições seguras de trânsito de trabalhadores e veículos nas vias próprias internas de circulação do estabelecimento rural, com sinalização visível e proteções físicas onde houver risco de quedas dos veículos de acordo com o disposto da NR 31. É recomendável conter um plano interno de trânsito para definição dos limites de velocidade, pontos estratégicos para instalação de placas de sinalização e lombadas.
+
+
+
+28. GESTÃO DE RESÍDUOS
+
+O empregador rural com o suporte de uma consultoria ambiental deverá dispor de um programa de gerenciamento e descarte de resíduos provenientes do seu processo produtivo, visando a preservação da saúde dos colaboradores e do meio ambiente.
+
+
+
+29. ACIDENTES DE TRABALHO
+
+A empresa deverá registrar os acidentes de trabalho ocorridos e comunicá-los ao INSS mediante emissão da CAT – Comunicação de Acidente de Trabalho, quando necessário. Os dados de acidentes servirão de subsídio para as ações preventivas e corretivas do PGRTR.
+
+
+
+
+
+30. DIRETRIZES DA MEDICINA OCUPACIONAL
+
+As ações de saúde ocupacional referentes ao PGRTR são de responsabilidade do médico coordenador do PCMSO e da empresa, e incluem: monitoramento da saúde dos trabalhadores expostos aos riscos identificados no inventário; controle da imunização ativa dos empregados relacionada a riscos ocupacionais conforme o Ministério da Saúde.
+
+
+
+31. TIPOS DE EXAMES OCUPACIONAIS
+
+Os exames ocupacionais realizados no âmbito deste PGRTR incluem:
+
+• Admissional: realizado antes que o empregado assuma suas atividades;
+
+• Periódico: realizado em intervalos regulares conforme os riscos identificados;
+
+• Retorno ao trabalho: após ausência superior a 30 dias por motivo de doença ou acidente;
+
+• Mudança de risco: antes da mudança de função que implique exposição a risco diferente;
+
+• Demissional: realizado até a data de homologação da demissão.
+
+
+
+32. PLANO DE VACINAÇÃO
+
+O empregador deverá garantir que os trabalhadores mantenham em dia as vacinas obrigatórias conforme abaixo:
+
+• Hepatite B: todos os funcionários com exposição a riscos biológicos e objetos perfurocortantes;
+
+• Dupla adulto – tétano e difteria: todos os funcionários com risco de lesões abertas;
+
+• Demais vacinas conforme indicação do médico do trabalho e histórico ocupacional.
+
+
+
+33. AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR
+
+A empresa deverá implantar ações primárias visando a prevenção de acidentes e doenças, incluindo:
+
+• Treinamentos sobre percepção de riscos e importância do uso de EPIs;
+
+• Realização de palestras relacionadas à saúde;
+
+• Cartazes e orientações sobre prevenção (Diabetes, DST, COVID, Tabagismo, Depressão, etc.);
+
+• Implantação de Ginástica Laboral;
+
+• Campanhas de incentivo à vacinação.
+
+
+
+34. MATERIAIS PARA PRIMEIROS SOCORROS
+
+Todo estabelecimento deverá estar equipado com material necessário à prestação dos primeiros socorros, considerando as características da atividade desenvolvida, guardado em local adequado e aos cuidados de pessoa treinada. O Kit mínimo deverá conter:
+
+Instrumentos:
+
+• Termômetro; Tesoura sem ponta; Pinça.
+
+Material para Curativo:
+
+• Luvas de Látex; Polvidine; Algodão Hidrófilo; Gaze esterilizada; Esparadrapo; Ataduras de crepe (4 e 10 cm); Curativo adesivo (Band Aid); Tampão Oftálmico; Cotonetes.
+
+Antissépticos:
+
+• Solução de Iodo; Soro Fisiológico 0,9%.
+
+
+
+
+
+35. ASO – ATESTADO DE SAÚDE OCUPACIONAL
+
+Para todo exame clínico ocupacional realizado, os médicos examinadores autorizados no presente PGRTR irão emitir o ASO – Atestado de Saúde Ocupacional, em 03 vias: empregador, funcionário e prontuário clínico.
+
+O ASO deverá conter no mínimo:
+
+• Razão social e CNPJ ou CAEPF da organização;
+
+• Nome completo do empregado, CPF e função;
+
+• Descrição dos perigos ou fatores de risco identificados no PGRTR;
+
+• Indicação e data de realização dos exames ocupacionais clínicos e complementares;
+
+• Definição de apto ou inapto para a função;
+
+• Nome e número de registro do médico responsável pelo PGRTR;
+
+• Data, número de registro e assinatura do médico examinador.
+
+
+
+
+
+
+
+36. PLANEJAMENTO DOS EXAMES OCUPACIONAIS
+
+Relação de exames ocupacionais por função ou grupo de funções, atrelado aos fatores de risco identificados no PGRTR, com respectiva periodicidade de realização.
+
+
+
+PLANEJAMENTO DOS EXAMES OCUPACIONAIS
+
+GHE / Funções
+
+Agentes Ambientais (Riscos)
+
+Exame
+
+Código eSocial
+
+Periodicidade dos Exames
+
+Admissional
+
+6 meses após Admissão
+
+Periódico Anual
+
+Mudança de Risco
+
+Retorno ao Trabalho
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+37. DANOS À SAÚDE
+
+
+
+TABELA DE FATOR DE RISCO x PREJUÍZO À SAÚDE
+
+Agente de Risco
+
+Fator de Risco
+
+Possível Dano à Saúde
+
+Físico
+
+Calor
+
+Aumento da irritabilidade, fraqueza, depressão, ansiedade e incapacidade de concentração.
+
+Físico
+
+Radiação Não Ionizante (Solar)
+
+Queimaduras, dermatites, desidratação, insolação.
+
+Físico
+
+Vibração de Corpo Inteiro
+
+Doenças vasculares, neurológicas e musculares.
+
+Ergonômico
+
+Esforço físico
+
+Cansaço, dores musculares, hipertensão arterial, diabetes, úlceras.
+
+Ergonômico
+
+Movimentos repetitivos
+
+LER/DORT, tendinites, síndrome do túnel do carpo.
+
+Ergonômico
+
+Postura inadequada
+
+Dores na coluna, problemas posturais crônicos.
+
+Mecânico
+
+Queda de mesmo nível
+
+Fraturas, contusões, escoriações, entorses.
+
+Mecânico
+
+Ataque de animal
+
+Fraturas, hematomas, lacerações, traumatismo craniano, perfurações.
+
+Mecânico
+
+Cortes e lesões
+
+Cortes, lesões, hematomas, amputações e fraturas.
+
+Mecânico
+
+Queda de nível (acima de 2m)
+
+Fraturas, escoriações, cortes, sangramento.
+
+Mecânico
+
+Incêndio / explosão
+
+Lesões, fraturas, hematomas, queimaduras, intoxicação e morte.
+
+Químico
+
+Defensivos agrícolas
+
+Intoxicação aguda/crônica, dermatites, problemas respiratórios.
+
+Químico
+
+Produtos de limpeza
+
+Dermatites, irritações respiratórias.
+
+Biológico
+
+Bactérias e parasitas
+
+Doenças infeccionais, parasitoses, doenças patológicas.
+
+Biológico
+
+Microorganismos (contato com animais)
+
+Doenças infectocontagiosas, infecções e morte.
+
+
+
+
+
+38. CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO
+
+A empresa deverá comunicar ao INSS, mediante CAT, todo acidente de trabalho ou doença ocupacional ocorrido, até o primeiro dia útil seguinte ao da ocorrência. Em caso de morte, a comunicação deverá ser imediata.
+
+
+
+REGISTRO DE CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO
+
+Data
+
+Nº da CAT
+
+Tipo da CAT
+
+Tipo do Acidente
+
+Parte Atingida
+
+CID
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+39. PLANO ANUAL DE AÇÕES
+
+A ordem de prioridades das ações do presente PGRTR será definida de acordo à metodologia da Matriz GUT através do produto da nota de Gravidade, Urgência e Tendência.
+
+
+
+Metodologia da Matriz GUT
+
+Nota
+
+Gravidade
+
+Urgência
+
+Tendência
+
+01
+
+Sem gravidade
+
+Pode esperar
+
+Não mudar nada
+
+02
+
+Pouco grave
+
+Pouco urgente
+
+Piorar em longo prazo
+
+03
+
+Grave
+
+O mais rápido possível
+
+Piorar em médio prazo
+
+04
+
+Muito grave
+
+Com alguma urgência
+
+Piorar em curto prazo
+
+05
+
+Extremamente grave
+
+Ação imediata
+
+Piorará rapidamente
+
+
+
+PLANO ANUAL DE AÇÕES
+
+Ord.
+
+Ação / Medida de Controle
+
+Responsável
+
+Recursos Necessários
+
+G
+
+U
+
+T
+
+GUT
+
+Prazo / Previsão
+
+01
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+02
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+03
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+04
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+05
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+06
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+07
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+08
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+09
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+40. ENCERRAMENTO
+
+O presente PGRTR constitui-se em instrumento de gestão dos riscos ocupacionais no trabalho rural, elaborado com base nas normas regulamentadoras vigentes, visando a prevenção de acidentes e doenças do trabalho e a preservação da saúde e integridade física dos trabalhadores rurais.
+
+Este programa deverá ser revisado anualmente ou sempre que houver modificações nas condições de trabalho que possam alterar os riscos ocupacionais identificados.
+
+
+
+
+
+
+
+____________________________________________
+
+[NOME DO RESPONSÁVEL TÉCNICO]
+
+[CRT/CREA/CFT nº XXXXX]
+
+Responsável Técnico pelo PGRTR
+
+
+
+____________________________________________
+
+[NOME DO REPRESENTANTE LEGAL]
+
+[Cargo]
+
+Empregador Rural
+
+
+
+[Cidade/UF], [DD/MM/AAAA]
+
