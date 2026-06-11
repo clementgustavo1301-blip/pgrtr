@@ -15,9 +15,13 @@ const { TABELA_27_ESOCIAL, CATEGORIAS_EXAMES, RISCOS_EXAMES_MAP, getExamesRecome
 const app = express();
 const PORT = 3000;
 
-// Data directory for saved companies
-const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+// Data directory for saved companies (Use /tmp on Vercel/Production)
+const DATA_DIR = process.env.VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (err) {
+  console.warn('[WARNING] Cannot create DATA_DIR. Running in read-only environment:', err.message);
+}
 
 // Middleware
 app.use(cors());
@@ -522,3 +526,6 @@ app.listen(PORT, () => {
   console.log('  ╚══════════════════════════════════════════════════╝');
   console.log('');
 });
+
+// Export the Express API for Vercel
+module.exports = app;
