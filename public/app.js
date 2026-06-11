@@ -87,6 +87,12 @@ const DEFAULT_DOCUMENTS = [
   { descricao: 'PPP – Perfil Profissiográfico Previdenciário', norma: 'IN 128 INSS' }
 ];
 
+const DEFAULT_EXAMS = [
+  { gheFuncoes: "Fiscal de Campo", riscos: "", exame: "Avaliação Clínica Ocupacional", codigoEsocial: "0295", admissional: true, semestral: false, anual: true, mudancaRisco: true, retornoTrabalho: true },
+  { gheFuncoes: "Fiscal de Campo + Pulverização", riscos: "", exame: "Avaliação Clínica Ocupacional, Acetilcolinesterase, Hemograma", codigoEsocial: "0295, 0750, 0693", admissional: true, semestral: true, anual: true, mudancaRisco: true, retornoTrabalho: true },
+  { gheFuncoes: "Tratorista", riscos: "", exame: "Avaliação Clínica Ocupacional, Audiometria", codigoEsocial: "0295, 0281", admissional: true, semestral: false, anual: true, mudancaRisco: true, retornoTrabalho: true }
+];
+
 const PROBABILITY_OPTIONS = [
   { value: '1', label: '1 - Improvável' },
   { value: '2', label: '2 - Rara' },
@@ -166,9 +172,9 @@ function initializeDefaults() {
   if (appData.documentos.length === 0) {
     appData.documentos = DEFAULT_DOCUMENTS.map(d => ({ ...d }));
   }
-  // Add default exame if empty
+  // Load default exames if empty
   if (appData.exames.length === 0) {
-    addExame();
+    appData.exames = DEFAULT_EXAMS.map(e => ({ ...e }));
   }
   // Add default acao if empty
   if (appData.acoes.length === 0) {
@@ -486,6 +492,92 @@ function duplicateGHE(index) {
   saveToStorage();
   showToast('GHE Duplicado', 'O GHE foi copiado. Edite os dados necessários.');
 }
+
+async function suggestRisksAI() {
+  const cnae = appData.empresa.cnae;
+  const atividade = appData.empresa.atividadeEconomica;
+  
+  if (!cnae || !atividade) {
+    showToast('Atenção', 'Preencha o CNAE e a Atividade Econômica na Etapa 1 primeiro.', 'warning');
+    return;
+  }
+  
+  const btn = document.getElementById('btnSuggestAI');
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="loading-spinner__circle" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;"></span> Sugerindo...';
+  btn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/ai/suggest-risks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cnae, atividade })
+    });
+    
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Erro na IA');
+    }
+    
+    const data = await res.json();
+    if (data.ghes && data.ghes.length > 0) {
+      // Clear empty default GHE if it's the only one
+      if (appData.ghes.length === 1 && !appData.ghes[0].nome && appData.ghes[0].riscos[0].agente === '') {
+        appData.ghes = [];
+      }
+      
+      data.ghes.forEach((g, idx) => {
+        const ghe = {
+          nome: g.setor || \`GHE \${appData.ghes.length + 1}\`,
+          setor: g.setor || '',
+          funcao: g.funcoes || '',
+          descricaoAtividades: 'Sugestão IA: Verifique e edite',
+          riscos: [createDefaultRisk()],
+          recomendacoes: ''
+        };
+        // We put the AI suggested risks string in the first risk's description just to not lose it, or map it.
+        ghe.riscos[0].agente = 'Mecânico/Acidentes';
+        ghe.riscos[0].fonteGeradora = 'IA Sugeriu: ' + g.riscos;
+        
+        appData.ghes.push(ghe);
+        
+        // Add exams if suggested
+        if (g.exames) {
+          const exameCodes = [];
+          const examesArr = g.exames.split(',').map(e => e.trim().toLowerCase());
+          
+          examesArr.forEach(exam => {
+            for (const [key, code] of Object.entries(ESOCIAL_EXAM_MAP)) {
+              if (exam.includes(key)) {
+                if (!exameCodes.includes(code)) exameCodes.push(code);
+                break;
+              }
+            }
+          });
+          
+          appData.exames.push({
+            gheFuncoes: g.funcoes,
+            riscos: g.riscos,
+            exame: g.exames,
+            codigoEsocial: exameCodes.join(', '),
+            admissional: true, semestral: false, anual: true, mudancaRisco: true, retornoTrabalho: true
+          });
+        }
+      });
+      
+      renderGHEs();
+      renderExames();
+      saveToStorage();
+      showToast('Sucesso', 'Sugestões de GHEs e Exames aplicadas!');
+    }
+  } catch (err) {
+    showToast('Erro IA', err.message, 'error');
+  } finally {
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+  }
+}
+
 
 function createDefaultRisk() {
   return {
@@ -806,6 +898,45 @@ function addExame(data = null) {
   renderExames();
 }
 
+const ESOCIAL_EXAM_MAP = {
+  'avaliação clínica': '0295',
+  'audiometria': '0281',
+  'eletrocardiograma': '0530',
+  'ecg': '0530',
+  'eletroencefalograma': '0536',
+  'eeg': '0536',
+  'espirometria': '1050',
+  'acuidade visual': '0296',
+  'hemograma': '0693',
+  'glicemia': '0658',
+  'acetilcolinesterase': '0750',
+  'raio x': '0561',
+  'radiografia': '0561'
+};
+
+function updateEsocialCode(index, examText) {
+  if (!examText) return;
+  const exams = examText.split(',').map(e => e.trim().toLowerCase());
+  const codes = [];
+  
+  exams.forEach(exam => {
+    for (const [key, code] of Object.entries(ESOCIAL_EXAM_MAP)) {
+      if (exam.includes(key)) {
+        if (!codes.includes(code)) codes.push(code);
+        break;
+      }
+    }
+  });
+  
+  if (codes.length > 0) {
+    const currentCode = appData.exames[index].codigoEsocial;
+    // Only update if current is empty or we want to overwrite
+    appData.exames[index].codigoEsocial = codes.join(', ');
+    const input = document.getElementById(`esocial-code-${index}`);
+    if (input) input.value = codes.join(', ');
+  }
+}
+
 function removeExame(index) {
   appData.exames.splice(index, 1);
   renderExames();
@@ -837,11 +968,11 @@ function renderExames() {
         <div class="form-group">
           <label class="form-label">Exame</label>
           <input type="text" class="form-input" value="${escapeHtml(e.exame)}" placeholder="Ex: Audiometria, Hemograma"
-            onchange="appData.exames[${i}].exame = this.value">
+            onchange="appData.exames[${i}].exame = this.value; updateEsocialCode(${i}, this.value)">
         </div>
         <div class="form-group">
           <label class="form-label">Código eSocial</label>
-          <input type="text" class="form-input" value="${escapeHtml(e.codigoEsocial)}" placeholder="Ex: 0905"
+          <input type="text" class="form-input" id="esocial-code-${i}" value="${escapeHtml(e.codigoEsocial)}" placeholder="Ex: 0281"
             onchange="appData.exames[${i}].codigoEsocial = this.value">
         </div>
       </div>
