@@ -8,9 +8,15 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
+
+// Polyfill necessário para pdf-parse no Node 21+
+if (typeof DOMMatrix === 'undefined') {
+  global.DOMMatrix = class DOMMatrix {};
+}
+const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 const { generatePGRTR } = require('./generate-docx');
-const { TABELA_27_ESOCIAL, CATEGORIAS_EXAMES, RISCOS_EXAMES_MAP, getExamesRecomendados } = require('./esocial-tabela27');
+// const { TABELA_27_ESOCIAL, CATEGORIAS_EXAMES, RISCOS_EXAMES_MAP, getExamesRecomendados } = require('./esocial-tabela27');
 
 const app = express();
 const PORT = 3000;
@@ -33,6 +39,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const PizZip = require('pizzip');
+const Docxtemplater = require('docxtemplater');
+
 // =============================================
 // Generate DOCX endpoint
 // =============================================
@@ -46,7 +55,77 @@ app.post('/api/generate', async (req, res) => {
 
     console.log(`[PGRTR] Gerando relatório para: ${data.empresa.razaoSocial || 'N/A'}`);
     
-    const buffer = await generatePGRTR(data);
+    // Caminho para o template mestre
+    const templatePath = path.join(__dirname, 'PGRTR_Template.docx');
+    
+    if (!fs.existsSync(templatePath)) {
+      console.error('[PGRTR] Template não encontrado!');
+      return res.status(500).json({ 
+        error: 'Arquivo modelo (PGRTR_Template.docx) não encontrado. Siga o guia para criar o seu modelo com tags e salve na raiz do projeto.' 
+      });
+    }
+
+    // Carregar o conteúdo do arquivo
+    const content = fs.readFileSync(templatePath, 'binary');
+    
+    // Iniciar o PizZip e Docxtemplater
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      nullGetter() { return ""; } // Remove undefined/null substituindo por string vazia
+    });
+    
+    // Pré-processar alguns dados (como cálculos ou formatação)
+    data.ghes.forEach(ghe => {
+      ghe.riscos.forEach(r => {
+        // Exemplo: calcular o GUT ou classe se necessário
+      });
+    });
+
+    data.acoes.forEach(a => {
+      const g = parseInt(a.g) || 1;
+      const u = parseInt(a.u) || 1;
+      const t = parseInt(a.t) || 1;
+      a.gut = g * u * t;
+    });
+
+    // Injetar EPIs e Exames dentro de funcionarios para facilitar o uso no docxtemplater
+    if (data.funcionarios && Array.isArray(data.funcionarios)) {
+      data.funcionarios.forEach(f => {
+        // EPIs
+        if (data.epiMatrix && data.epiMatrix[f.funcao]) {
+          f.epis = data.epiMatrix[f.funcao];
+        } else {
+          f.epis = {};
+        }
+        // Exames (filtrar onde gheFuncoes inclui essa funcao)
+        if (data.exames) {
+          f.examesList = data.exames.filter(e => 
+            e.gheFuncoes && e.gheFuncoes.toLowerCase().includes(f.funcao.toLowerCase())
+          );
+        }
+      });
+    }
+
+    // Transformar a epiMatrix em um array linear para quem quiser iterar com {#matrizEpis}
+    if (data.epiMatrix) {
+      data.matrizEpis = Object.keys(data.epiMatrix).map(funcao => {
+        return {
+          funcao: funcao,
+          ...data.epiMatrix[funcao]
+        };
+      });
+    }
+
+    // Injetar os dados no documento
+    doc.render(data);
+
+    // Gerar o buffer final
+    const buffer = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+    });
     
     const razao = (data.empresa.razaoSocial || 'PGRTR')
       .replace(/[^a-zA-Z0-9\s\-áéíóúãõâêîôûàèìòùçÁÉÍÓÚÃÕÂÊÎÔÛÀÈÌÒÙÇ]/g, '')
@@ -60,10 +139,17 @@ app.post('/api/generate', async (req, res) => {
     res.setHeader('Content-Length', buffer.length);
     
     res.send(buffer);
-    console.log(`[PGRTR] Relatório gerado com sucesso (${(buffer.length / 1024).toFixed(1)} KB)`);
+    console.log(`[PGRTR] Relatório gerado com sucesso via Template (${(buffer.length / 1024).toFixed(1)} KB)`);
     
   } catch (error) {
     console.error('[PGRTR] Erro ao gerar relatório:', error);
+    // Se for erro específico do docxtemplater
+    if (error.properties && error.properties.errors instanceof Array) {
+      const errorMessages = error.properties.errors.map(function (error) {
+        return error.properties.explanation;
+      }).join("\n");
+      console.log('Error Messages', errorMessages);
+    }
     res.status(500).json({ error: 'Erro ao gerar o relatório: ' + error.message });
   }
 });
@@ -117,67 +203,102 @@ app.get('/api/cnpj/:cnpj', async (req, res) => {
 });
 
 // =============================================
-// Importar PGRTR existente (.docx)
+// Importar PGRTR existente (.docx ou .pdf)
 // =============================================
-app.post('/api/import-docx', async (req, res) => {
+app.post('/api/import-file', async (req, res) => {
   try {
-    const { fileBase64 } = req.body;
+    const { fileBase64, fileType } = req.body;
     
     if (!fileBase64) {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
     
-    // Decode base64 to buffer
     const buffer = Buffer.from(fileBase64, 'base64');
+    let text = '';
     
-    console.log(`[IMPORT] Extraindo texto do DOCX (${(buffer.length / 1024).toFixed(1)} KB)...`);
+    if (fileType === 'pdf') {
+      console.log(`[IMPORT] PDF detectado (${(buffer.length / 1024).toFixed(1)} KB). Extraindo texto fallback...`);
+      try { const pdfData = await pdfParse(buffer); text = pdfData.text; }
+      catch (e) { console.error('[IMPORT] pdf-parse falhou:', e.message); }
+    } else {
+      console.log(`[IMPORT] DOCX detectado (${(buffer.length / 1024).toFixed(1)} KB). Extraindo texto...`);
+      const result = await mammoth.extractRawText({ buffer });
+      text = result.value;
+    }
     
-    // Extract text with mammoth
-    const result = await mammoth.extractRawText({ buffer });
-    const text = result.value;
+    console.log(`[IMPORT] Texto fallback: ${text.length} caracteres`);
     
-    console.log(`[IMPORT] Texto extraído: ${text.length} caracteres`);
-    
-    // Parse the text to extract structured data
     let parsedData;
     if (process.env.GEMINI_API_KEY) {
-      console.log('[IMPORT] API Key detectada. Iniciando parsing via Gemini...');
+      console.log('[IMPORT] Gemini ativado. Enviando para IA...');
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const prompt = `Extraia os dados deste PGRTR e retorne APENAS um JSON válido seguindo exatamente essa estrutura:
+        
+        const prompt = `Você é um engenheiro de segurança do trabalho especialista em PGRTR.
+
+O documento em anexo (ou texto abaixo) é um PGRTR criado em OUTRO MODELO/PADRÃO. Sua missão:
+1. LER e INTERPRETAR 100% do conteúdo do documento
+2. MAPEAR absolutamente todas as informações para a estrutura JSON abaixo
+3. NÃO PERDER nenhuma informação — cada setor, função, risco, EPI, exame, treinamento
+4. Campo não encontrado = deixe vazio "" ou valor padrão
+5. Retorne APENAS JSON puro, sem markdown, sem backticks, sem explicações
+
+REGRAS DE MAPEAMENTO:
+- "empresa": Dados cadastrais. Busque razão social, CNPJ, endereço, CNAE, grau de risco, representante legal.
+- "funcionarios": CADA função/cargo do documento => uma entrada com setor e quantidade.
+- "ambientes": CADA setor/área de trabalho descrita (Campo, Packing House, Escritório, Oficina etc).
+- "ghes": Grupos Homogêneos de Exposição. CADA grupo de trabalhadores com riscos similares:
+  - nome, setor, funcao (funções separadas por vírgula), descricaoAtividades
+  - riscos: array com TODOS os riscos (agente: Físico/Químico/Biológico/Ergonômico/Mecânico, fator, fonteGeradora, trajetoria, exposicaoAtividade, exposicaoNorma, medidasControle, metodologia, resultado, classificacaoRisco, probabilidade 1-5, severidade 1-5)
+  - recomendacoes
+- "exames": Exames médicos. gheFuncoes, riscos, exame, codigoEsocial, admissional/semestral/anual/mudancaRisco/retornoTrabalho (true/false)
+- "epis": Para CADA função, quais EPIs usa. Campos booleanos: avental, boneArabe, botaCouro, botaImpermeavel, cintoSeguranca, kitPulverizacao, luvaMalhaAco, luvaQuimica, luvaVaqueta, luvaImpermeavel, luvaTricotada, manguito, mascaraFiltro, protetorAuricular, capacete, respiradorPFF2, oculos, vestimentaRF
+- "treinamentos": Lista de treinamentos (descricao, funcoes)
+- "documentos": Documentos complementares (descricao, norma)
+- "procedimentos": Textos de procedimentos (animais, agrotoxicos, climaticas, penoso, eletrico, transito, residuos, acidentes)
+- "cats": CATs registradas (data, numeroCat, tipoCat, tipoAcidente, parteAtingida, cid)
+- "acoes": Plano de ação (acao, responsavel, prazo, g 1-5, u 1-5, t 1-5)
+- "encerramento": Responsável técnico (responsavelTecnico, registroProfissional)
+
+JSON COMPLETO:
 {
-  "empresa": { "razaoSocial": "", "nomeFantasia": "", "cnpj": "", "endereco": "", "cep": "", "bairro": "", "cidade": "", "uf": "", "telefone": "", "email": "", "representanteLegal": "", "cnae": "", "atividade": "", "grauRisco": "" },
+  "empresa": { "razaoSocial": "", "nomeFantasia": "", "cnpj": "", "endereco": "", "cep": "", "bairro": "", "cidade": "", "uf": "", "telefone": "", "email": "", "representanteLegal": "", "cargoRepresentante": "", "cnae": "", "atividadeEconomica": "", "grauRisco": "", "dataEmissao": "" },
   "funcionarios": [ { "setor": "", "funcao": "", "nFuncionarios": "" } ],
   "ambientes": [ { "setor": "", "descricao": "", "funcoes": "" } ],
-  "ghes": [ { "id": "01", "setor": "", "funcao": "", "descricao": "", "riscos": [ { "agente": "", "fator": "", "fonte": "", "trajetoria": "", "exposicaoAtividade": "", "exposicaoNorma": "", "avaliacao": "Qualitativa", "medidasControle": "", "metodologia": "", "resultado": "", "classificacaoRisco": "" } ] } ],
+  "ghes": [ { "nome": "", "setor": "", "funcao": "", "descricaoAtividades": "", "riscos": [ { "agente": "", "fator": "", "fonteGeradora": "", "trajetoria": "", "exposicaoAtividade": "", "exposicaoNorma": "", "medidasControle": "", "metodologia": "Qualitativa", "resultado": "", "classificacaoRisco": "", "probabilidade": "", "severidade": "" } ], "recomendacoes": "" } ],
   "exames": [ { "gheFuncoes": "", "riscos": "", "exame": "", "codigoEsocial": "", "admissional": true, "semestral": false, "anual": true, "mudancaRisco": true, "retornoTrabalho": true } ],
-  "epis": [ { "funcao": "", "avental": false, "boneArabe": false, "botaCouro": false, "botaImpermeavel": false, "cintoSeguranca": false, "kitPulverizacao": false, "luvaMalhaAco": false, "luvaQuimica": false, "luvaVaqueta": false, "luvaImpermeavel": false, "luvaTricotada": false, "manguito": false, "mascaraFiltro": false, "protetorAuricular": false, "capacete": false, "respiradorPFF2": false, "oculos": false, "vestimentaRF": false } ]
+  "epis": [ { "funcao": "", "avental": false, "boneArabe": false, "botaCouro": false, "botaImpermeavel": false, "cintoSeguranca": false, "kitPulverizacao": false, "luvaMalhaAco": false, "luvaQuimica": false, "luvaVaqueta": false, "luvaImpermeavel": false, "luvaTricotada": false, "manguito": false, "mascaraFiltro": false, "protetorAuricular": false, "capacete": false, "respiradorPFF2": false, "oculos": false, "vestimentaRF": false } ],
+  "treinamentos": [ { "descricao": "", "funcoes": "" } ],
+  "documentos": [ { "descricao": "", "norma": "" } ],
+  "procedimentos": { "animais": "", "agrotoxicos": "", "climaticas": "", "penoso": "", "eletrico": "", "transito": "", "residuos": "", "acidentes": "" },
+  "cats": [ { "data": "", "numeroCat": "", "tipoCat": "", "tipoAcidente": "", "parteAtingida": "", "cid": "" } ],
+  "acoes": [ { "acao": "", "responsavel": "", "prazo": "", "g": "", "u": "", "t": "" } ],
+  "encerramento": { "responsavelTecnico": "", "registroProfissional": "" }
 }
-Texto do documento:
-${text.substring(0, 30000)} // Limite de caracteres para não estourar tokens`;
+
+${fileType !== 'pdf' && text.length > 0 ? 'Texto do documento:\n' + text.substring(0, 50000) : 'Leia o arquivo PDF em anexo com perfeição e extraia absolutamente TUDO.'}`;
+
+        const contents = [];
+        if (fileType === 'pdf') {
+          console.log('[IMPORT] Enviando PDF inteiro para Gemini via inlineData...');
+          contents.push({ inlineData: { data: fileBase64, mimeType: 'application/pdf' } });
+        }
+        contents.push(prompt);
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: prompt,
+          contents: contents,
           config: { temperature: 0.1 }
         });
 
         let aiText = response.text || '';
-        // If the SDK uses response.text()
-        if (typeof response.text === 'function') {
-          aiText = response.text();
-        }
-
-        if (aiText.startsWith('\`\`\`json')) {
-          aiText = aiText.replace(/^\`\`\`json/g, '').replace(/\`\`\`$/g, '').trim();
-        } else if (aiText.startsWith('\`\`\`')) {
-          aiText = aiText.replace(/^\`\`\`/g, '').replace(/\`\`\`$/g, '').trim();
-        }
+        if (typeof response.text === 'function') { aiText = response.text(); }
+        aiText = aiText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/g, '').trim();
         
         parsedData = JSON.parse(aiText);
-        console.log('[IMPORT] Sucesso no parsing com Gemini!');
+        console.log('[IMPORT] Gemini retornou JSON válido!');
       } catch (aiErr) {
-        console.error('[IMPORT] Erro com Gemini, usando fallback regex:', aiErr.message);
+        console.error('[IMPORT] Erro Gemini, usando fallback:', aiErr.message);
         parsedData = parseDocxText(text);
       }
     } else {
@@ -185,10 +306,19 @@ ${text.substring(0, 30000)} // Limite de caracteres para não estourar tokens`;
       parsedData = parseDocxText(text);
     }
     
-    console.log(`[IMPORT] Dados extraídos:`, {
+    // Sanitização robusta dos dados
+    parsedData = sanitizeImportedData(parsedData);
+    
+    console.log(`[IMPORT] Resultado final:`, {
       empresa: parsedData.empresa?.razaoSocial || 'N/A',
       funcionarios: parsedData.funcionarios?.length || 0,
-      ghes: parsedData.ghes?.length || 0
+      ambientes: parsedData.ambientes?.length || 0,
+      ghes: parsedData.ghes?.length || 0,
+      riscosTotais: (parsedData.ghes || []).reduce((s, g) => s + (g.riscos?.length || 0), 0),
+      exames: parsedData.exames?.length || 0,
+      epis: parsedData.epis?.length || 0,
+      treinamentos: parsedData.treinamentos?.length || 0,
+      acoes: parsedData.acoes?.length || 0
     });
     
     res.json(parsedData);
@@ -198,6 +328,196 @@ ${text.substring(0, 30000)} // Limite de caracteres para não estourar tokens`;
     res.status(500).json({ error: 'Erro ao importar documento: ' + error.message });
   }
 });
+
+// Helpers
+function _arr(v) { return Array.isArray(v) ? v : (v ? [v] : []); }
+function _s(v) { return v == null ? '' : String(v).trim(); }
+
+// Normaliza o agente de risco para os valores exatos do dropdown
+const VALID_AGENTS = ['Físico', 'Químico', 'Biológico', 'Ergonômico', 'Mecânico'];
+function normalizeAgente(val) {
+  if (!val) return '';
+  const v = String(val).trim();
+  // Match direto
+  const found = VALID_AGENTS.find(a => a.toLowerCase() === v.toLowerCase());
+  if (found) return found;
+  // Match parcial (ex: "Mecânico/Acidentes" => "Mecânico", "Físico - Ruído" => "Físico")
+  const partial = VALID_AGENTS.find(a => v.toLowerCase().includes(a.toLowerCase()));
+  if (partial) return partial;
+  // Aliases comuns
+  const aliases = {
+    'acidente': 'Mecânico', 'acidentes': 'Mecânico', 'mecanico': 'Mecânico',
+    'fisico': 'Físico', 'quimico': 'Químico', 'biologico': 'Biológico',
+    'ergonomico': 'Ergonômico', 'de acidente': 'Mecânico'
+  };
+  const lower = v.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+  return aliases[lower] || v;
+}
+
+// Normaliza o fator de risco para os valores exatos do dropdown
+const VALID_FACTORS = {
+  'Físico': ['Calor', 'Radiação Não Ionizante (Solar)', 'Vibração de Corpo Inteiro', 'Ruído', 'Umidade'],
+  'Químico': ['Defensivos agrícolas', 'Produtos de limpeza', 'Poeiras orgânicas', 'Fertilizantes'],
+  'Biológico': ['Bactérias e parasitas', 'Microorganismos (contato com animais)', 'Fungos', 'Vírus'],
+  'Ergonômico': ['Esforço físico', 'Movimentos repetitivos', 'Postura inadequada', 'Trabalho em pé prolongado'],
+  'Mecânico': ['Queda de mesmo nível', 'Queda de nível (acima de 2m)', 'Ataque de animal', 'Cortes e lesões', 'Incêndio / explosão', 'Prensamento', 'Atropelamento']
+};
+function normalizeFator(agente, val) {
+  if (!val || !agente) return val || '';
+  const v = String(val).trim();
+  const factors = VALID_FACTORS[agente];
+  if (!factors) return v;
+  // Match exato
+  const exact = factors.find(f => f.toLowerCase() === v.toLowerCase());
+  if (exact) return exact;
+  // Match parcial (conteúdo)
+  const partial = factors.find(f => v.toLowerCase().includes(f.toLowerCase()) || f.toLowerCase().includes(v.toLowerCase()));
+  if (partial) return partial;
+  return v;
+}
+
+// Normaliza probabilidade/severidade para string "1"-"5"
+function normalizeNumber(val) {
+  if (!val) return '';
+  const n = String(val).trim().replace(/[^0-9]/g, '');
+  if (n && parseInt(n) >= 1 && parseInt(n) <= 5) return String(parseInt(n));
+  return '';
+}
+
+// Normaliza eficaz para "S" ou "N"
+function normalizeEficaz(val) {
+  if (!val) return '';
+  const v = String(val).trim().toLowerCase();
+  if (v === 's' || v === 'sim' || v === 'yes' || v === 'eficaz' || v === 'true') return 'S';
+  if (v === 'n' || v === 'não' || v === 'nao' || v === 'no' || v === 'ineficaz' || v === 'false') return 'N';
+  return '';
+}
+
+// Normaliza frequência para "Habitual", "Intermitente" ou "Eventual"
+function normalizeFrequencia(val) {
+  if (!val) return 'Habitual';
+  const v = String(val).trim().toLowerCase();
+  if (v.includes('habitual') || v.includes('continu') || v.includes('diári') || v.includes('permanente')) return 'Habitual';
+  if (v.includes('intermitente') || v.includes('periód') || v.includes('regular')) return 'Intermitente';
+  if (v.includes('eventual') || v.includes('esporád') || v.includes('raro') || v.includes('ocasion')) return 'Eventual';
+  return 'Habitual';
+}
+
+// Sanitizar e normalizar dados importados pela IA
+function sanitizeImportedData(raw) {
+  const d = { ...raw };
+  
+  // Empresa
+  d.empresa = d.empresa || {};
+  ['razaoSocial','nomeFantasia','cnpj','endereco','cep','bairro','cidade','uf','telefone','email','representanteLegal','cargoRepresentante','cnae','atividadeEconomica','grauRisco','dataEmissao'].forEach(f => d.empresa[f] = _s(d.empresa[f]));
+  // Normalize field name aliases the AI might use
+  if (!d.empresa.atividadeEconomica && d.empresa.atividade) d.empresa.atividadeEconomica = _s(d.empresa.atividade);
+  if (!d.empresa.razaoSocial && d.empresa.razao_social) d.empresa.razaoSocial = _s(d.empresa.razao_social);
+  if (!d.empresa.razaoSocial && d.empresa.nome) d.empresa.razaoSocial = _s(d.empresa.nome);
+  if (!d.empresa.nomeFantasia && d.empresa.nome_fantasia) d.empresa.nomeFantasia = _s(d.empresa.nome_fantasia);
+  if (!d.empresa.nomeFantasia && d.empresa.fantasia) d.empresa.nomeFantasia = _s(d.empresa.fantasia);
+  if (!d.empresa.representanteLegal && d.empresa.representante) d.empresa.representanteLegal = _s(d.empresa.representante);
+  if (!d.empresa.cargoRepresentante && d.empresa.cargo) d.empresa.cargoRepresentante = _s(d.empresa.cargo);
+  // Normalize grauRisco to just the number
+  if (d.empresa.grauRisco) {
+    const grMatch = d.empresa.grauRisco.match(/[1-4]/);
+    if (grMatch) d.empresa.grauRisco = grMatch[0];
+  }
+  
+  // Funcionários
+  d.funcionarios = _arr(d.funcionarios).map(f => ({
+    setor: _s(f.setor), funcao: _s(f.funcao),
+    nFuncionarios: _s(f.nFuncionarios || f.numFuncionarios || f.quantidade || '')
+  })).filter(f => f.funcao || f.setor);
+  
+  // Ambientes
+  d.ambientes = _arr(d.ambientes).map(a => ({
+    setor: _s(a.setor || a.nome), descricao: _s(a.descricao || a.ambiente),
+    funcoes: _s(a.funcoes || '')
+  })).filter(a => a.setor || a.descricao);
+  
+  // GHEs
+  d.ghes = _arr(d.ghes).map((g, i) => ({
+    nome: _s(g.nome || g.nomeGhe || `GHE ${String(i+1).padStart(2,'0')}`),
+    setor: _s(g.setor), funcao: _s(g.funcao || g.funcoes),
+    descricaoAtividades: _s(g.descricaoAtividades || g.descricao || g.atividades),
+    riscos: _arr(g.riscos).map(r => {
+      const agente = normalizeAgente(r.agente || r.tipo);
+      return {
+        agente: agente,
+        fator: normalizeFator(agente, r.fator || r.fatorRisco || r.nome),
+        fonteGeradora: _s(r.fonteGeradora || r.fonte),
+        frequencia: normalizeFrequencia(r.frequencia),
+        trajetoria: _s(r.trajetoria),
+        atividade: _s(r.exposicaoAtividade || r.atividade),
+        norma: _s(r.exposicaoNorma || r.norma),
+        nivelAcao: _s(r.nivelAcao),
+        resultado: _s(r.resultado),
+        tecnicaUsada: _s(r.tecnicaUsada || r.metodologia || 'Qualitativa'),
+        medidasControle: _s(r.medidasControle || r.medidas),
+        eficaz: normalizeEficaz(r.eficaz || r.eficacia),
+        probabilidade: normalizeNumber(r.probabilidade),
+        severidade: normalizeNumber(r.severidade || r.gravidade),
+        classificacaoRisco: _s(r.classificacaoRisco || r.classificacao)
+      };
+    }),
+    recomendacoes: _s(g.recomendacoes || g.recomendacao)
+  })).filter(g => g.setor || g.funcao || g.nome);
+  d.ghes.forEach(g => { if (!g.riscos.length) g.riscos = [{ agente:'',fator:'',fonteGeradora:'',frequencia:'Habitual',trajetoria:'',atividade:'',norma:'',nivelAcao:'',resultado:'',tecnicaUsada:'Qualitativa',medidasControle:'',eficaz:'',probabilidade:'',severidade:'',classificacaoRisco:'' }]; });
+  
+  // Exames
+  d.exames = _arr(d.exames).map(e => ({
+    gheFuncoes: _s(e.gheFuncoes || e.funcao || e.funcoes || e.ghe),
+    riscos: _s(e.riscos || e.risco), exame: _s(e.exame || e.nomeExame || e.exames),
+    codigoEsocial: _s(e.codigoEsocial || e.codigo),
+    admissional: e.admissional !== undefined ? !!e.admissional : true,
+    semestral: e.semestral !== undefined ? !!e.semestral : false,
+    anual: e.anual !== undefined ? !!e.anual : true,
+    mudancaRisco: e.mudancaRisco !== undefined ? !!e.mudancaRisco : true,
+    retornoTrabalho: e.retornoTrabalho !== undefined ? !!e.retornoTrabalho : true
+  })).filter(e => e.exame || e.gheFuncoes);
+  
+  // EPIs
+  const epiKeys = ['avental','boneArabe','botaCouro','botaImpermeavel','cintoSeguranca','kitPulverizacao','luvaMalhaAco','luvaQuimica','luvaVaqueta','luvaImpermeavel','luvaTricotada','manguito','mascaraFiltro','protetorAuricular','capacete','respiradorPFF2','oculos','vestimentaRF'];
+  d.epis = _arr(d.epis).map(e => {
+    const row = { funcao: _s(e.funcao || e.cargo) };
+    epiKeys.forEach(k => { row[k] = !!e[k]; });
+    return row;
+  }).filter(e => e.funcao);
+  
+  // Treinamentos
+  d.treinamentos = _arr(d.treinamentos).map(t => ({
+    descricao: _s(t.descricao || t.nome || t.treinamento), funcoes: _s(t.funcoes || t.publico)
+  })).filter(t => t.descricao);
+  
+  // Documentos
+  d.documentos = _arr(d.documentos).map(doc => ({
+    descricao: _s(doc.descricao || doc.nome || doc.documento), norma: _s(doc.norma || doc.referencia)
+  })).filter(doc => doc.descricao);
+  
+  // Procedimentos
+  d.procedimentos = d.procedimentos || {};
+  ['animais','agrotoxicos','climaticas','penoso','eletrico','transito','residuos','acidentes'].forEach(k => d.procedimentos[k] = _s(d.procedimentos[k]));
+  
+  // CATs
+  d.cats = _arr(d.cats).map(c => ({
+    data: _s(c.data), numeroCat: _s(c.numeroCat || c.numero), tipoCat: _s(c.tipoCat || c.tipo),
+    tipoAcidente: _s(c.tipoAcidente), parteAtingida: _s(c.parteAtingida), cid: _s(c.cid)
+  })).filter(c => c.numeroCat || c.data);
+  
+  // Ações
+  d.acoes = _arr(d.acoes).map(a => ({
+    acao: _s(a.acao || a.descricao || a.medida), responsavel: _s(a.responsavel),
+    prazo: _s(a.prazo), g: normalizeNumber(a.g || a.gravidade), u: normalizeNumber(a.u || a.urgencia), t: normalizeNumber(a.t || a.tendencia)
+  })).filter(a => a.acao);
+  
+  // Encerramento
+  d.encerramento = d.encerramento || {};
+  d.encerramento.responsavelTecnico = _s(d.encerramento.responsavelTecnico || d.encerramento.responsavel);
+  d.encerramento.registroProfissional = _s(d.encerramento.registroProfissional || d.encerramento.registro || d.encerramento.crea);
+  
+  return d;
+}
 
 // AI Suggestions Endpoint
 app.post('/api/ai/suggest-risks', async (req, res) => {

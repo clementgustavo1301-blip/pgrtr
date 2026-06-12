@@ -46,6 +46,30 @@
       <p class="header__subtitle">Programa de Gerenciamento de Riscos no Trabalho Rural — Preencha os dados e gere o relatório completo em DOCX</p>
     </header>
 
+    <!-- AI Import Section -->
+    <div class="ai-import-card">
+      <div class="ai-import-card__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+      </div>
+      <div class="ai-import-card__content">
+        <h3 class="ai-import-card__title">✨ Importar PGRTR Existente com IA</h3>
+        <p class="ai-import-card__desc">Possui um PGRTR feito em <strong>outro modelo ou padrão</strong> (Word ou PDF)? Faça o upload dele aqui. Nossa inteligência artificial irá ler, interpretar e traduzir todas as informações de qualquer formato, preenchendo automaticamente o nosso gerador para você criar a versão atualizada no novo padrão.</p>
+        <div class="ai-import-card__action">
+          <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <label class="btn btn--secondary" style="cursor: pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Selecionar Documento DOCX/PDF
+              <input type="file" id="importDocxFile" accept=".docx,.pdf" style="display: none;">
+            </label>
+            <button class="btn btn--primary" id="btnProcessarIA" style="display: none; cursor: pointer;">
+              ✨ Gerar com IA
+            </button>
+          </div>
+          <span id="importFileName" style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-top: 0.5rem;">Nenhum arquivo selecionado</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Stepper -->
     <nav class="stepper" id="stepper">
       <div class="stepper__item active" data-step="0">
@@ -694,6 +718,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

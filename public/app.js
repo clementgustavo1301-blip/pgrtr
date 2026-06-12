@@ -149,6 +149,34 @@ document.addEventListener('DOMContentLoaded', () => {
   bindInputListeners();
   renderAll();
   updateStepper();
+  
+  let selectedFileForImport = null;
+  const importInput = document.getElementById('importDocxFile');
+  const btnProcessarIA = document.getElementById('btnProcessarIA');
+  
+  if (importInput) {
+    importInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const fileNameSpan = document.getElementById('importFileName');
+      if (file) {
+        selectedFileForImport = file;
+        if (fileNameSpan) fileNameSpan.textContent = file.name;
+        if (btnProcessarIA) btnProcessarIA.style.display = 'inline-flex';
+      } else {
+        selectedFileForImport = null;
+        if (fileNameSpan) fileNameSpan.textContent = 'Nenhum arquivo selecionado';
+        if (btnProcessarIA) btnProcessarIA.style.display = 'none';
+      }
+    });
+  }
+
+  if (btnProcessarIA) {
+    btnProcessarIA.addEventListener('click', () => {
+      if (selectedFileForImport) {
+        handleImportDocx(selectedFileForImport);
+      }
+    });
+  }
 });
 
 function initializeDefaults() {
@@ -528,7 +556,7 @@ async function suggestRisksAI() {
       
       data.ghes.forEach((g, idx) => {
         const ghe = {
-          nome: g.setor || \`GHE \${appData.ghes.length + 1}\`,
+          nome: g.setor || `GHE ${appData.ghes.length + 1}`,
           setor: g.setor || '',
           funcao: g.funcoes || '',
           descricaoAtividades: 'Sugestão IA: Verifique e edite',
@@ -1219,7 +1247,8 @@ async function generateReport() {
     });
 
     if (!response.ok) {
-      throw new Error('Erro ao gerar o relatório');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Erro ao gerar o relatório');
     }
 
     const blob = await response.blob();
@@ -1241,6 +1270,266 @@ async function generateReport() {
   } finally {
     overlay.classList.remove('active');
   }
+}
+
+// =============================================
+// Import PGRTR via AI
+// =============================================
+async function handleImportDocx(file) {
+  if (!file) return;
+
+  const fileNameSpan = document.getElementById('importFileName');
+  if (fileNameSpan) fileNameSpan.textContent = file.name;
+
+  const overlay = document.getElementById('loadingOverlay');
+  const spinnerText = overlay.querySelector('.loading-spinner__text');
+  const spinnerSub = overlay.querySelector('.loading-spinner__sub');
+  
+  const originalText = spinnerText ? spinnerText.textContent : 'Gerando relatório PGRTR...';
+  const originalSub = spinnerSub ? spinnerSub.textContent : 'Isso pode levar alguns segundos';
+
+  if (spinnerText) spinnerText.textContent = 'Analisando documento com IA...';
+  if (spinnerSub) spinnerSub.textContent = 'Extraindo e estruturando todos os dados do PGRTR antigo';
+  
+  overlay.classList.add('active');
+
+  try {
+    const base64 = await toBase64(file);
+    const cleanBase64 = base64.split(',')[1] || base64;
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+
+    const response = await fetch('/api/import-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileBase64: cleanBase64, fileType: isPdf ? 'pdf' : 'docx' })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Erro ao importar documento');
+    }
+
+    const data = await response.json();
+    console.log('[IMPORT] Dados recebidos da API:', Object.keys(data));
+
+    // === EMPRESA ===
+    if (data.empresa) {
+      appData.empresa = { ...appData.empresa, ...data.empresa };
+      Object.keys(appData.empresa).forEach(key => {
+        const el = document.querySelector(`[data-field="empresa.${key}"]`);
+        if (el) el.value = appData.empresa[key] || '';
+      });
+    }
+
+    // === FUNCIONÁRIOS ===
+    if (data.funcionarios && Array.isArray(data.funcionarios) && data.funcionarios.length > 0) {
+      appData.funcionarios = data.funcionarios.map(f => ({
+        setor: f.setor || '',
+        funcao: f.funcao || '',
+        numFuncionarios: f.numFuncionarios || f.nFuncionarios || f.quantidade || ''
+      }));
+    }
+
+    // === AMBIENTES ===
+    if (data.ambientes && Array.isArray(data.ambientes) && data.ambientes.length > 0) {
+      appData.ambientes = data.ambientes.map(a => ({
+        setor: a.setor || a.nome || '',
+        descricao: a.descricao || '',
+        funcoes: a.funcoes || ''
+      }));
+    }
+
+    // === GHEs ===
+    if (data.ghes && Array.isArray(data.ghes) && data.ghes.length > 0) {
+      appData.ghes = data.ghes.map(g => ({
+        nome: g.nome || g.funcao || 'GHE',
+        setor: g.setor || '',
+        funcao: g.funcao || g.funcoes || '',
+        descricaoAtividades: g.descricaoAtividades || g.descricao || '',
+        riscos: (g.riscos || []).map(r => ({
+          agente: r.agente || '',
+          fator: r.fator || '',
+          fonteGeradora: r.fonteGeradora || r.fonte || '',
+          frequencia: r.frequencia || 'Habitual',
+          trajetoria: r.trajetoria || '',
+          atividade: r.exposicaoAtividade || r.atividade || '',
+          norma: r.exposicaoNorma || r.norma || '',
+          nivelAcao: r.nivelAcao || '',
+          resultado: r.resultado || '',
+          tecnicaUsada: r.tecnicaUsada || r.metodologia || 'Qualitativa',
+          medidasControle: r.medidasControle || r.medidas || '',
+          eficaz: r.eficaz || '',
+          probabilidade: r.probabilidade || '',
+          severidade: r.severidade || '',
+          classificacaoRisco: r.classificacaoRisco || r.classificacao || ''
+        })),
+        recomendacoes: g.recomendacoes || ''
+      }));
+      // Ensure each GHE has at least one risk
+      appData.ghes.forEach(g => {
+        if (!g.riscos || g.riscos.length === 0) {
+          g.riscos = [createDefaultRisk()];
+        }
+      });
+    }
+
+    // === EXAMES ===
+    if (data.exames && Array.isArray(data.exames) && data.exames.length > 0) {
+      appData.exames = data.exames.map(e => ({
+        gheFuncoes: e.gheFuncoes || '',
+        riscos: e.riscos || '',
+        exame: e.exame || '',
+        codigoEsocial: e.codigoEsocial || '',
+        admissional: e.admissional !== undefined ? e.admissional : true,
+        semestral: e.semestral !== undefined ? e.semestral : false,
+        anual: e.anual !== undefined ? e.anual : true,
+        mudancaRisco: e.mudancaRisco !== undefined ? e.mudancaRisco : true,
+        retornoTrabalho: e.retornoTrabalho !== undefined ? e.retornoTrabalho : true
+      }));
+    }
+
+    // === EPIs ===
+    if (data.epis && Array.isArray(data.epis) && data.epis.length > 0) {
+      const serverKeys = ['avental','boneArabe','botaCouro','botaImpermeavel','cintoSeguranca','kitPulverizacao','luvaMalhaAco','luvaQuimica','luvaVaqueta','luvaImpermeavel','luvaTricotada','manguito','mascaraFiltro','protetorAuricular','capacete','respiradorPFF2','oculos','vestimentaRF'];
+      const matrix = {};
+      const uniqueFuncs = getUniqueFunctions(); // Get currently registered functions to match exactly
+      
+      data.epis.forEach(epiRow => {
+        let func = epiRow.funcao || epiRow.cargo;
+        if (!func) return;
+        
+        // Find case-insensitive match in existing functions to avoid creating disconnected rows
+        const match = uniqueFuncs.find(f => f.trim().toLowerCase() === func.trim().toLowerCase());
+        if (match) func = match;
+        
+        if (!matrix[func]) matrix[func] = {};
+        
+        EPI_LIST.forEach((epi, idx) => {
+          const sKey = serverKeys[idx];
+          const cleanKey = toCamelCase(epi);
+          matrix[func][epi] = !!epiRow[sKey] || !!epiRow[cleanKey] || !!epiRow[epi];
+        });
+      });
+      appData.epiMatrix = { ...appData.epiMatrix, ...matrix };
+    }
+
+    // === TREINAMENTOS ===
+    if (data.treinamentos && Array.isArray(data.treinamentos) && data.treinamentos.length > 0) {
+      appData.treinamentos = data.treinamentos.map(t => ({
+        descricao: t.descricao || '',
+        funcoes: t.funcoes || ''
+      }));
+    }
+
+    // === DOCUMENTOS ===
+    if (data.documentos && Array.isArray(data.documentos) && data.documentos.length > 0) {
+      appData.documentos = data.documentos.map(d => ({
+        descricao: d.descricao || '',
+        norma: d.norma || ''
+      }));
+    }
+
+    // === PROCEDIMENTOS ===
+    if (data.procedimentos) {
+      const procKeys = ['animais', 'agrotoxicos', 'climaticas', 'penoso', 'eletrico', 'transito', 'residuos', 'acidentes'];
+      procKeys.forEach(key => {
+        if (data.procedimentos[key]) {
+          appData.procedimentos[key] = data.procedimentos[key];
+          const el = document.querySelector(`[data-field="procedimentos.${key}"]`);
+          if (el) el.value = data.procedimentos[key];
+        }
+      });
+    }
+
+    // === CATs ===
+    if (data.cats && Array.isArray(data.cats) && data.cats.length > 0) {
+      appData.cats = data.cats.map(c => ({
+        data: c.data || '',
+        numeroCat: c.numeroCat || '',
+        tipoCat: c.tipoCat || '',
+        tipoAcidente: c.tipoAcidente || '',
+        parteAtingida: c.parteAtingida || '',
+        cid: c.cid || ''
+      }));
+    }
+
+    // === AÇÕES ===
+    if (data.acoes && Array.isArray(data.acoes) && data.acoes.length > 0) {
+      appData.acoes = data.acoes.map(a => ({
+        acao: a.acao || '',
+        responsavel: a.responsavel || '',
+        prazo: a.prazo || '',
+        g: a.g || '',
+        u: a.u || '',
+        t: a.t || ''
+      }));
+    }
+
+    // === ENCERRAMENTO ===
+    if (data.encerramento) {
+      appData.encerramento = {
+        responsavelTecnico: data.encerramento.responsavelTecnico || '',
+        registroProfissional: data.encerramento.registroProfissional || ''
+      };
+      const rtEl = document.querySelector('[data-field="encerramento.responsavelTecnico"]');
+      const rpEl = document.querySelector('[data-field="encerramento.registroProfissional"]');
+      if (rtEl) rtEl.value = appData.encerramento.responsavelTecnico;
+      if (rpEl) rpEl.value = appData.encerramento.registroProfissional;
+    }
+
+    // Refresh UI
+    renderAll();
+    saveToStorage();
+    showToast('Importação concluída!', `Dados extraídos: ${appData.funcionarios.length} funções, ${appData.ghes.length} GHEs, ${appData.exames.length} exames.`);
+  } catch (error) {
+    console.error('Import error:', error);
+    showToast('Erro ao importar', error.message || 'Houve um erro no processamento do arquivo', 'error');
+  } finally {
+    overlay.classList.remove('active');
+    if (spinnerText) spinnerText.textContent = originalText;
+    if (spinnerSub) spinnerSub.textContent = originalSub;
+    // Hide process button and clear input so it can be re-selected if wanted
+    const btnProcessarIA = document.getElementById('btnProcessarIA');
+    const importInput = document.getElementById('importDocxFile');
+    const fileNameSpan = document.getElementById('importFileName');
+    
+    if (importInput) importInput.value = '';
+    if (btnProcessarIA) btnProcessarIA.style.display = 'none';
+    if (fileNameSpan) fileNameSpan.textContent = 'Nenhum arquivo selecionado';
+  }
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+function toCamelCase(str) {
+  const map = {
+    'Avental Impermeável': 'avental',
+    'Boné Árabe': 'boneArabe',
+    'Bota de Couro': 'botaCouro',
+    'Bota Impermeável': 'botaImpermeavel',
+    'Cinto de Segurança': 'cintoSeguranca',
+    'Kit Pulverização': 'kitPulverizacao',
+    'Luva Malha de Aço': 'luvaMalhaAco',
+    'Luva Química': 'luvaQuimica',
+    'Luva de Vaqueta': 'luvaVaqueta',
+    'Luva Impermeável': 'luvaImpermeavel',
+    'Luva Tricotada': 'luvaTricotada',
+    'Manguito Solar': 'manguito',
+    'Máscara Filtro Carbono': 'mascaraFiltro',
+    'Protetor Auricular': 'protetorAuricular',
+    'Capacete de Segurança': 'capacete',
+    'Respirador PFF2': 'respiradorPFF2',
+    'Óculos de Proteção': 'oculos',
+    'Vestimenta RF': 'vestimentaRF'
+  };
+  return map[str] || str;
 }
 
 // =============================================
