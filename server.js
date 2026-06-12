@@ -45,7 +45,6 @@ const Docxtemplater = require('docxtemplater');
 // =============================================
 // Generate DOCX endpoint
 // =============================================
-const { generatePGRTR } = require('./generate-docx');
 
 app.post('/api/generate', async (req, res) => {
   try {
