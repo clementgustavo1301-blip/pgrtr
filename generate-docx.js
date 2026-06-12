@@ -442,7 +442,7 @@ async function generatePGRTR(data) {
   const epiCols = 2 + uniqueFuncs.length;
   
   epiRows.push(new TableRow({
-    children: [titleRow('MATRIZ DE EPI POR FUNÇÃO', epiCols).options.children[0]],
+    children: [cell('MATRIZ DE EPI POR FUNÇÃO', { colspan: epiCols, bold: true, bg: CLR.primary, fontColor: CLR.white, align: AlignmentType.CENTER, size: SZ.sm })],
     tableHeader: true, cantSplit: true
   }));
   
