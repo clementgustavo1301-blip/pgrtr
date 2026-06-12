@@ -45,6 +45,8 @@ const Docxtemplater = require('docxtemplater');
 // =============================================
 // Generate DOCX endpoint
 // =============================================
+const { generatePGRTR } = require('./generate-docx');
+
 app.post('/api/generate', async (req, res) => {
   try {
     const data = req.body;
@@ -53,79 +55,10 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'Dados incompletos' });
     }
 
-    console.log(`[PGRTR] Gerando relatório para: ${data.empresa.razaoSocial || 'N/A'}`);
+    console.log(`[PGRTR] Gerando relatório programático para: ${data.empresa.razaoSocial || 'N/A'}`);
     
-    // Caminho para o template mestre
-    const templatePath = path.join(__dirname, 'PGRTR_Template.docx');
-    
-    if (!fs.existsSync(templatePath)) {
-      console.error('[PGRTR] Template não encontrado!');
-      return res.status(500).json({ 
-        error: 'Arquivo modelo (PGRTR_Template.docx) não encontrado. Siga o guia para criar o seu modelo com tags e salve na raiz do projeto.' 
-      });
-    }
-
-    // Carregar o conteúdo do arquivo
-    const content = fs.readFileSync(templatePath, 'binary');
-    
-    // Iniciar o PizZip e Docxtemplater
-    const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      nullGetter() { return ""; } // Remove undefined/null substituindo por string vazia
-    });
-    
-    // Pré-processar alguns dados (como cálculos ou formatação)
-    data.ghes.forEach(ghe => {
-      ghe.riscos.forEach(r => {
-        // Exemplo: calcular o GUT ou classe se necessário
-      });
-    });
-
-    data.acoes.forEach(a => {
-      const g = parseInt(a.g) || 1;
-      const u = parseInt(a.u) || 1;
-      const t = parseInt(a.t) || 1;
-      a.gut = g * u * t;
-    });
-
-    // Injetar EPIs e Exames dentro de funcionarios para facilitar o uso no docxtemplater
-    if (data.funcionarios && Array.isArray(data.funcionarios)) {
-      data.funcionarios.forEach(f => {
-        // EPIs
-        if (data.epiMatrix && data.epiMatrix[f.funcao]) {
-          f.epis = data.epiMatrix[f.funcao];
-        } else {
-          f.epis = {};
-        }
-        // Exames (filtrar onde gheFuncoes inclui essa funcao)
-        if (data.exames) {
-          f.examesList = data.exames.filter(e => 
-            e.gheFuncoes && e.gheFuncoes.toLowerCase().includes(f.funcao.toLowerCase())
-          );
-        }
-      });
-    }
-
-    // Transformar a epiMatrix em um array linear para quem quiser iterar com {#matrizEpis}
-    if (data.epiMatrix) {
-      data.matrizEpis = Object.keys(data.epiMatrix).map(funcao => {
-        return {
-          funcao: funcao,
-          ...data.epiMatrix[funcao]
-        };
-      });
-    }
-
-    // Injetar os dados no documento
-    doc.render(data);
-
-    // Gerar o buffer final
-    const buffer = doc.getZip().generate({
-      type: 'nodebuffer',
-      compression: 'DEFLATE',
-    });
+    // Gerar o buffer final usando a biblioteca docx
+    const buffer = await generatePGRTR(data);
     
     const razao = (data.empresa.razaoSocial || 'PGRTR')
       .replace(/[^a-zA-Z0-9\s\-áéíóúãõâêîôûàèìòùçÁÉÍÓÚÃÕÂÊÎÔÛÀÈÌÒÙÇ]/g, '')
@@ -139,17 +72,10 @@ app.post('/api/generate', async (req, res) => {
     res.setHeader('Content-Length', buffer.length);
     
     res.send(buffer);
-    console.log(`[PGRTR] Relatório gerado com sucesso via Template (${(buffer.length / 1024).toFixed(1)} KB)`);
+    console.log(`[PGRTR] Relatório gerado com sucesso via gerador programático (${(buffer.length / 1024).toFixed(1)} KB)`);
     
   } catch (error) {
     console.error('[PGRTR] Erro ao gerar relatório:', error);
-    // Se for erro específico do docxtemplater
-    if (error.properties && error.properties.errors instanceof Array) {
-      const errorMessages = error.properties.errors.map(function (error) {
-        return error.properties.explanation;
-      }).join("\n");
-      console.log('Error Messages', errorMessages);
-    }
     res.status(500).json({ error: 'Erro ao gerar o relatório: ' + error.message });
   }
 });
