@@ -1298,18 +1298,121 @@ async function handleImportDocx(file) {
     const cleanBase64 = base64.split(',')[1] || base64;
     const isPdf = file.name.toLowerCase().endsWith('.pdf');
 
-    const response = await fetch('/api/import-file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileBase64: cleanBase64, fileType: isPdf ? 'pdf' : 'docx' })
-    });
+    let data;
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Erro ao importar documento');
+    if (isPdf) {
+      if (spinnerText) spinnerText.textContent = 'Enviando documento para a IA...';
+      if (spinnerSub) spinnerSub.textContent = 'Aguarde enquanto a IA lê e processa as informações (ignorando limite de 4.5MB)';
+
+      const configRes = await fetch('/api/config');
+      const { apiKey } = await configRes.json();
+
+      if (!apiKey) {
+        throw new Error('API Key do Gemini não configurada no servidor.');
+      }
+
+      const prompt = `Você é um engenheiro de segurança do trabalho especialista em PGRTR.
+
+O documento em anexo (ou texto abaixo) é um PGRTR criado em OUTRO MODELO/PADRÃO. Sua missão:
+1. LER e INTERPRETAR 100% do conteúdo do documento
+2. MAPEAR absolutamente todas as informações para a estrutura JSON abaixo
+3. NÃO PERDER nenhuma informação — cada setor, função, risco, EPI, exame, treinamento
+4. Campo não encontrado = deixe vazio "" ou valor padrão
+5. Retorne APENAS JSON puro, sem markdown, sem backticks, sem explicações
+
+REGRAS DE MAPEAMENTO:
+- "empresa": Dados cadastrais. Busque razão social, CNPJ, endereço, CNAE, grau de risco, representante legal.
+- "funcionarios": CADA função/cargo do documento => uma entrada com setor e quantidade.
+- "ambientes": CADA setor/área de trabalho descrita (Campo, Packing House, Escritório, Oficina etc).
+- "ghes": Grupos Homogêneos de Exposição. CADA grupo de trabalhadores com riscos similares:
+  - nome, setor, funcao (funções separadas por vírgula), descricaoAtividades
+  - riscos: array com TODOS os riscos (agente: Físico/Químico/Biológico/Ergonômico/Mecânico, fator, fonteGeradora, trajetoria, exposicaoAtividade, exposicaoNorma, medidasControle, metodologia, resultado, classificacaoRisco, probabilidade 1-5, severidade 1-5)
+  - recomendacoes
+- "exames": Exames médicos. gheFuncoes, riscos, exame, codigoEsocial, admissional/semestral/anual/mudancaRisco/retornoTrabalho (true/false)
+- "epis": Para CADA função, quais EPIs usa. Campos booleanos: avental, boneArabe, botaCouro, botaImpermeavel, cintoSeguranca, kitPulverizacao, luvaMalhaAco, luvaQuimica, luvaVaqueta, luvaImpermeavel, luvaTricotada, manguito, mascaraFiltro, protetorAuricular, capacete, respiradorPFF2, oculos, vestimentaRF
+- "treinamentos": Lista de treinamentos (descricao, funcoes)
+- "documentos": Documentos complementares (descricao, norma)
+- "procedimentos": Textos de procedimentos (animais, agrotoxicos, climaticas, penoso, eletrico, transito, residuos, acidentes)
+- "cats": CATs registradas (data, numeroCat, tipoCat, tipoAcidente, parteAtingida, cid)
+- "acoes": Plano de ação (acao, responsavel, prazo, g 1-5, u 1-5, t 1-5)
+- "encerramento": Responsável técnico (responsavelTecnico, registroProfissional)
+
+JSON COMPLETO:
+{
+  "empresa": { "razaoSocial": "", "nomeFantasia": "", "cnpj": "", "endereco": "", "cep": "", "bairro": "", "cidade": "", "uf": "", "telefone": "", "email": "", "representanteLegal": "", "cargoRepresentante": "", "cnae": "", "atividadeEconomica": "", "grauRisco": "", "dataEmissao": "" },
+  "funcionarios": [ { "setor": "", "funcao": "", "nFuncionarios": "" } ],
+  "ambientes": [ { "setor": "", "descricao": "", "funcoes": "" } ],
+  "ghes": [ { "nome": "", "setor": "", "funcao": "", "descricaoAtividades": "", "riscos": [ { "agente": "", "fator": "", "fonteGeradora": "", "trajetoria": "", "exposicaoAtividade": "", "exposicaoNorma": "", "medidasControle": "", "metodologia": "Qualitativa", "resultado": "", "classificacaoRisco": "", "probabilidade": "", "severidade": "" } ], "recomendacoes": "" } ],
+  "exames": [ { "gheFuncoes": "", "riscos": "", "exame": "", "codigoEsocial": "", "admissional": true, "semestral": false, "anual": true, "mudancaRisco": true, "retornoTrabalho": true } ],
+  "epis": [ { "funcao": "", "avental": false, "boneArabe": false, "botaCouro": false, "botaImpermeavel": false, "cintoSeguranca": false, "kitPulverizacao": false, "luvaMalhaAco": false, "luvaQuimica": false, "luvaVaqueta": false, "luvaImpermeavel": false, "luvaTricotada": false, "manguito": false, "mascaraFiltro": false, "protetorAuricular": false, "capacete": false, "respiradorPFF2": false, "oculos": false, "vestimentaRF": false } ],
+  "treinamentos": [ { "descricao": "", "funcoes": "" } ],
+  "documentos": [ { "descricao": "", "norma": "" } ],
+  "procedimentos": { "animais": "", "agrotoxicos": "", "climaticas": "", "penoso": "", "eletrico": "", "transito": "", "residuos": "", "acidentes": "" },
+  "cats": [ { "data": "", "numeroCat": "", "tipoCat": "", "tipoAcidente": "", "parteAtingida": "", "cid": "" } ],
+  "acoes": [ { "acao": "", "responsavel": "", "prazo": "", "g": "", "u": "", "t": "" } ],
+  "encerramento": { "responsavelTecnico": "", "registroProfissional": "" }
+}
+
+Leia o arquivo PDF em anexo com perfeição e extraia absolutamente TUDO.`;
+
+      const payload = {
+        contents: [{
+          parts: [
+            { inlineData: { data: cleanBase64, mimeType: 'application/pdf' } },
+            { text: prompt }
+          ]
+        }],
+        generationConfig: { temperature: 0.1 }
+      };
+
+      const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!aiRes.ok) {
+        const err = await aiRes.json().catch(() => ({}));
+        throw new Error('Erro na IA: ' + (err.error?.message || aiRes.statusText));
+      }
+
+      const aiData = await aiRes.json();
+      let aiText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      aiText = aiText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/g, '').trim();
+      
+      let parsedData = JSON.parse(aiText);
+
+      if (spinnerText) spinnerText.textContent = 'Processando e estruturando dados...';
+
+      const sanitizeRes = await fetch('/api/sanitize-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsedData)
+      });
+
+      if (!sanitizeRes.ok) {
+        throw new Error('Erro ao sanitizar dados no servidor');
+      }
+
+      data = await sanitizeRes.json();
+
+    } else {
+      // Se for DOCX (ou outro arquivo), passa pelo backend tradicionalmente
+      const response = await fetch('/api/import-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileBase64: cleanBase64, fileType: 'docx' })
+      });
+
+      if (!response.ok) {
+        if (response.status === 413) throw new Error('Arquivo DOCX muito grande. O limite da Vercel é 4.5MB.');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Erro ao importar documento DOCX');
+      }
+
+      data = await response.json();
     }
 
-    const data = await response.json();
     console.log('[IMPORT] Dados recebidos da API:', Object.keys(data));
 
     // === EMPRESA ===

@@ -329,6 +329,23 @@ ${fileType !== 'pdf' && text.length > 0 ? 'Texto do documento:\n' + text.substri
   }
 });
 
+// =============================================
+// API Config & Sanitization (Frontend direct processing)
+// =============================================
+app.get('/api/config', (req, res) => {
+  res.json({ apiKey: process.env.GEMINI_API_KEY || '' });
+});
+
+app.post('/api/sanitize-import', (req, res) => {
+  try {
+    const sanitizedData = sanitizeImportedData(req.body);
+    res.json(sanitizedData);
+  } catch (error) {
+    console.error('[SANITIZE] Erro:', error);
+    res.status(500).json({ error: 'Erro ao sanitizar dados importados: ' + error.message });
+  }
+});
+
 // Helpers
 function _arr(v) { return Array.isArray(v) ? v : (v ? [v] : []); }
 function _s(v) { return v == null ? '' : String(v).trim(); }
