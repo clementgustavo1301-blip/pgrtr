@@ -65,20 +65,20 @@ const RISK_DAMAGES_TABLE = [
 ];
 
 const RISK_COLORS = {
-  'Mecânico': { bg: '5B9BD5', color: 'FFFFFF' },     // Blue
-  'Físico': { bg: '00B050', color: 'FFFFFF' },       // Green
-  'Ergonômico': { bg: 'FFFF00', color: '000000' },   // Yellow
-  'Químico': { bg: 'FF0000', color: 'FFFFFF' },      // Red
-  'Biológico': { bg: '833C0B', color: 'FFFFFF' },    // Brown
-  'Mecânico/Acidente': { bg: '5B9BD5', color: 'FFFFFF' } // Blue (alias)
+  'Mecânico': { bg: '5B9BD5', color: 'FFFFFF' },
+  'Físico': { bg: '00B050', color: 'FFFFFF' },
+  'Ergonômico': { bg: 'FFFF00', color: '000000' },
+  'Químico': { bg: 'FF0000', color: 'FFFFFF' },
+  'Biológico': { bg: '833C0B', color: 'FFFFFF' },
+  'Mecânico/Acidente': { bg: '5B9BD5', color: 'FFFFFF' }
 };
 
 const CLASS_COLORS = {
-  'Trivial': { bg: 'E7E6E6', color: '000000' },      // Grey
-  'Tolerável': { bg: '00B050', color: 'FFFFFF' },    // Green
-  'Moderado': { bg: 'FFFF00', color: '000000' },     // Yellow
-  'Substancial': { bg: 'F4B183', color: '000000' },  // Orange
-  'Intolerável': { bg: 'FF0000', color: 'FFFFFF' }   // Red
+  'Trivial': { bg: 'E7E6E6', color: '000000' },
+  'Tolerável': { bg: '00B050', color: 'FFFFFF' },
+  'Moderado': { bg: 'FFFF00', color: '000000' },
+  'Substancial': { bg: 'F4B183', color: '000000' },
+  'Intolerável': { bg: 'FF0000', color: 'FFFFFF' }
 };
 
 const GUT_ROWS = [
@@ -87,6 +87,15 @@ const GUT_ROWS = [
   { nota: '03', g: 'Grave', u: 'O mais rápido possível', t: 'Piorar em médio prazo' },
   { nota: '04', g: 'Muito grave', u: 'Com alguma urgência', t: 'Piorar em curto prazo' },
   { nota: '05', g: 'Extremamente grave', u: 'Ação imediata', t: 'Piorará rapidamente' }
+];
+
+// EPI names for fallback (when epiMatrix is not available)
+const EPI_NAMES = [
+  'Avental Impermeável', 'Boné Árabe', 'Bota de Couro', 'Bota Impermeável',
+  'Cinto de Segurança', 'Kit Pulverização', 'Luva Malha de Aço', 'Luva Química',
+  'Luva de Vaqueta', 'Luva Impermeável', 'Luva Tricotada', 'Manguito Solar',
+  'Máscara Filtro Carbono', 'Protetor Auricular', 'Capacete de Segurança',
+  'Respirador PFF2', 'Óculos de Proteção', 'Vestimenta RF'
 ];
 
 // =============================================
@@ -261,10 +270,49 @@ function buildFooter() {
 }
 
 // =============================================
+// Build dynamic TOC numbering
+// =============================================
+function buildTOCNumbers(gheCount) {
+  // The reference document numbers sections continuously.
+  // Sections 1-2 are fixed (INTRO, IDENTIFICAÇÃO)
+  // Section 3 is the IRO (contains all GHEs as sub-items)
+  // Then sections continue from 4 onward
+  let n = 3; // IRO is section 3
+  const nums = {};
+  nums.iro = n;
+  n++;
+  nums.epi = n; n++;
+  nums.treinamentos = n; n++;
+  nums.documentos = n; n++;
+  nums.animais = n; n++;
+  nums.agrotoxicos = n; n++;
+  nums.climaticas = n; n++;
+  nums.penoso = n; n++;
+  nums.eletrico = n; n++;
+  nums.transito = n; n++;
+  nums.residuos = n; n++;
+  nums.acidentes = n; n++;
+  nums.medicina = n; n++;
+  nums.examesTipos = n; n++;
+  nums.vacinacao = n; n++;
+  nums.acoesPrimarias = n; n++;
+  nums.primeirosSocorros = n; n++;
+  nums.aso = n; n++;
+  nums.planejamentoExames = n; n++;
+  nums.danosSaude = n; n++;
+  nums.cat = n; n++;
+  nums.planoAnual = n; n++;
+  nums.encerramento = n;
+  return nums;
+}
+
+// =============================================
 // MAIN
 // =============================================
 async function generatePGRTR(data) {
   const emp = data.empresa || {};
+  const gheCount = (data.ghes || []).length;
+  const N = buildTOCNumbers(gheCount);
 
   // --- SECTION 1: COVER (Portrait, No Header) ---
   const sCover = [];
@@ -288,29 +336,49 @@ async function generatePGRTR(data) {
   // --- SECTION 2: INTRO & IDENTIFICAÇÃO (Portrait) ---
   const sIntro = [];
   sIntro.push(pCenter('SUMÁRIO', { bold: true, size: SZ.xl, color: CLR.primary, after: 300 }));
+  
+  // Dynamic TOC items with correct numbering
   const sumItems = [
-    '1. INTRODUÇÃO', '2. IDENTIFICAÇÃO DO EMPREGADOR RURAL',
-    '3. INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)', '4. MATRIZ DE EPI POR FUNÇÃO',
-    '5. MATRIZ DE TREINAMENTOS', '6. MATRIZ DE DOCUMENTOS',
-    '7. PROCEDIMENTOS NO TRABALHO COM ANIMAIS', '8. AGROTÓXICOS NO PGRTR',
-    '9. CONDIÇÕES CLIMÁTICAS ADVERSAS', '10. TRABALHO PENOSO',
-    '11. TRABALHO EM ZONA DE RISCO ELÉTRICO', '12. CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR',
-    '13. GESTÃO DE RESÍDUOS', '14. ACIDENTES DE TRABALHO',
-    '15. DIRETRIZES DA MEDICINA OCUPACIONAL', '16. TIPOS DE EXAMES OCUPACIONAIS',
-    '17. PLANO DE VACINAÇÃO', '18. AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR',
-    '19. MATERIAIS PARA PRIMEIROS SOCORROS', '20. ASO – ATESTADO DE SAÚDE OCUPACIONAL',
-    '21. PLANEJAMENTO DOS EXAMES OCUPACIONAIS', '22. DANOS À SAÚDE',
-    '23. CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO', '24. PLANO ANUAL DE AÇÕES',
-    '25. ENCERRAMENTO'
+    '1. INTRODUÇÃO',
+    '2. IDENTIFICAÇÃO DO EMPREGADOR RURAL',
+    `${N.iro}. INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)`,
+    `${N.epi}. MATRIZ DE EPI POR FUNÇÃO`,
+    `${N.treinamentos}. MATRIZ DE TREINAMENTOS`,
+    `${N.documentos}. MATRIZ DE DOCUMENTOS`,
+    `${N.animais}. PROCEDIMENTOS NO TRABALHO COM ANIMAIS`,
+    `${N.agrotoxicos}. AGROTÓXICOS NO PGRTR`,
+    `${N.climaticas}. CONDIÇÕES CLIMÁTICAS ADVERSAS`,
+    `${N.penoso}. TRABALHO PENOSO`,
+    `${N.eletrico}. TRABALHO EM ZONA DE RISCO ELÉTRICO`,
+    `${N.transito}. CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR`,
+    `${N.residuos}. GESTÃO DE RESÍDUOS`,
+    `${N.acidentes}. ACIDENTES DE TRABALHO`,
+    `${N.medicina}. DIRETRIZES DA MEDICINA OCUPACIONAL`,
+    `${N.examesTipos}. TIPOS DE EXAMES OCUPACIONAIS`,
+    `${N.vacinacao}. PLANO DE VACINAÇÃO`,
+    `${N.acoesPrimarias}. AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR`,
+    `${N.primeirosSocorros}. MATERIAIS PARA PRIMEIROS SOCORROS`,
+    `${N.aso}. ASO – ATESTADO DE SAÚDE OCUPACIONAL`,
+    `${N.planejamentoExames}. PLANEJAMENTO DOS EXAMES OCUPACIONAIS`,
+    `${N.danosSaude}. DANOS À SAÚDE`,
+    `${N.cat}. CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO`,
+    `${N.planoAnual}. PLANO ANUAL DE AÇÕES`,
+    `${N.encerramento}. ENCERRAMENTO`
   ];
   sumItems.forEach(item => {
     const parts = item.split(/\.\s/);
     sIntro.push(pLeft([t(`${parts[0]}. `, { bold: true, size: SZ.md }), t(parts.slice(1).join('. ') + '\t...', { size: SZ.md })], { after: 80 }));
   });
   
+  // Page break after TOC
+  sIntro.push(new Paragraph({ children: [new PageBreak()] }));
+  
   sIntro.push(hdr('INTRODUÇÃO', '1.'));
   sIntro.push(p('De acordo com a Portaria SEPRT nº 22.677, de outubro de 2020 com início de vigência em 27 de outubro de 2021 regulamentada pela NR 31, passa a ser obrigatório que os empregadores rurais mantenham atualizados o PGRTR – Programa de Gerenciamento de Riscos no Trabalho Rural.'));
   sIntro.push(p('O PGRTR contém o Inventário Geral dos Riscos e Planilhas de Exames Ocupacionais relacionados às atividades existentes no empregador rural, contemplando o reconhecimento e a avaliação dos riscos físicos, químicos, biológicos, ergonômicos e mecânicos em atendimento da NR principal (NR 31) e das complementares NR 01, NR 07, NR 09 e NR 17.'));
+  
+  // Page break after introduction
+  sIntro.push(new Paragraph({ children: [new PageBreak()] }));
   
   sIntro.push(hdr('IDENTIFICAÇÃO DO EMPREGADOR RURAL', '2.'));
   sIntro.push(tbl([
@@ -347,7 +415,7 @@ async function generatePGRTR(data) {
     tblRow(hCell('ID', { width: 10 }), hCell('Setor', { width: 30 }), hCell('Função', { width: 40 }), hCell('Nº Funcionários', { width: 20 }))
   ];
   (data.funcionarios || []).forEach((f, i) => {
-    funcRows.push(tblRow(cell(String(i + 1).padStart(2, '0'), { align: AlignmentType.CENTER }), valCell(f.setor), valCell(f.funcao), cell(f.numFuncionarios || '', { align: AlignmentType.CENTER })));
+    funcRows.push(tblRow(cell(String(i + 1).padStart(2, '0'), { align: AlignmentType.CENTER }), valCell(f.setor), valCell(f.funcao), cell(f.numFuncionarios || f.nFuncionarios || '', { align: AlignmentType.CENTER })));
   });
   sIntro.push(tbl(funcRows));
   sIntro.push(...blank(1));
@@ -369,7 +437,7 @@ async function generatePGRTR(data) {
 
   // --- SECTION 3: IRO & EPI (Landscape) ---
   const sIroEpi = [];
-  sIroEpi.push(hdr('INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)', '3.'));
+  sIroEpi.push(hdr('INVENTÁRIO DE RISCOS OCUPACIONAIS (IRO)', `${N.iro}.`));
   sIroEpi.push(p('Para obtenção do inventário de riscos global da empresa foram avaliadas todas as funções mediante reconhecimento e avaliação da exposição aos riscos ocupacionais atrelados às atividades desenvolvidas pelo cargo e ambientes de trabalho. Abaixo consta a separação de inventário de riscos com uma planilha separada por GHE'));
   sIroEpi.push(new Paragraph({ children: [new PageBreak()] }));
 
@@ -378,7 +446,7 @@ async function generatePGRTR(data) {
     
     // GHE Header Table
     const headerRows = [];
-    headerRows.push(tblRow(cell(`GHE ${num} - ${ghe.nome || '[NOME DA FUNÇÃO]'}`, { colspan: 3, bold: true, bg: '8DB86A', align: AlignmentType.CENTER, size: 16 })));
+    headerRows.push(tblRow(cell(`GHE ${num} - ${ghe.nome || '[NOME DA FUNÇÃO]'}`, { colspan: 3, bold: true, bg: '8DB86A', align: AlignmentType.CENTER, size: SZ.sm })));
     headerRows.push(tblRow(
       lblCell('Setor:', { size: 14 }), valCell(ghe.setor || '', { italics: true, size: 14 }),
       valCell(`Função: ${ghe.funcao || ''}`, { italics: true, size: 14, bold: true })
@@ -386,35 +454,63 @@ async function generatePGRTR(data) {
     headerRows.push(tblRow(lblCell('Descrição das Atividades:', { size: 14 }), valCell(ghe.descricaoAtividades || '', { colspan: 2, italics: true, size: 14 })));
     sIroEpi.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, columnWidths: [2000, 4000, 4000], rows: headerRows }));
 
-    // GHE Risks Table
+    // GHE Risks Table - Fixed column structure matching reference:
+    // Row 1: Agente | Fator | Fonte | Avaliações Quantitativas (colspan 6) | Medidas de Controle (colspan 2) | Metodologia | Matriz de Risco (colspan 3)
+    // Row 2 (sub-headers): Trajetória | Frequência | L.T. | Nível de Ação | Resultado | Técnica Utilizada | Descrição Medidas | Eficaz | (Metodologia merged) | Probabilidade | Severidade | Classif
+    const IRO_SZ = 14; // font size for IRO table cells (7pt)
     const gheRows = [];
     gheRows.push(hdrRow(
-      hCell('Agente de Risco', { rowspan: 2, size: 12 }), hCell('Fator de Risco', { rowspan: 2, size: 12 }), hCell('Fonte Geradora (Perigo)', { rowspan: 2, size: 12 }),
-      hCell('Avaliações Quantitativas', { colspan: 6, size: 12 }), hCell('Medidas de Controle Existentes', { colspan: 2, size: 12 }), 
-      hCell('Metodologia', { rowspan: 2, size: 12 }), hCell('Matriz de Risco', { colspan: 3, size: 12 })
+      hCell('Agente de Risco', { rowspan: 2, size: IRO_SZ }), 
+      hCell('Fator de Risco', { rowspan: 2, size: IRO_SZ }), 
+      hCell('Fonte Geradora (Perigo)', { rowspan: 2, size: IRO_SZ }),
+      hCell('Avaliações Quantitativas', { colspan: 6, size: IRO_SZ }), 
+      hCell('Medidas de Controle Existentes', { colspan: 2, size: IRO_SZ }), 
+      hCell('Metodologia', { rowspan: 2, size: IRO_SZ }), 
+      hCell('Matriz de Risco', { colspan: 3, size: IRO_SZ })
     ));
     gheRows.push(hdrRow(
-      hCell('Trajetória', { size: 12 }), hCell('Frequência Exposição', { size: 12 }), hCell('L.T.', { size: 12 }), hCell('Nível de Ação', { size: 12 }), hCell('Resultado', { size: 12 }), hCell('Técnica Utilizada', { size: 12 }),
-      hCell('Descrição das Medidas', { size: 12 }), hCell('Eficaz (S/N)', { size: 12 }), 
-      hCell('Probabilidade', { size: 12 }), hCell('Severidade', { size: 12 }), hCell('Classif. do Risco', { size: 12 })
+      hCell('Trajetória', { size: IRO_SZ }), 
+      hCell('Frequência Exposição', { size: IRO_SZ }), 
+      hCell('L.T.', { size: IRO_SZ }), 
+      hCell('Nível de Ação', { size: IRO_SZ }), 
+      hCell('Resultado', { size: IRO_SZ }), 
+      hCell('Técnica Utilizada', { size: IRO_SZ }),
+      hCell('Descrição das Medidas', { size: IRO_SZ }), 
+      hCell('Eficaz (S/N)', { size: IRO_SZ }), 
+      hCell('Probabilidade', { size: IRO_SZ }), 
+      hCell('Severidade', { size: IRO_SZ }), 
+      hCell('Classif. do Risco', { size: IRO_SZ })
     ));
+    
     (ghe.riscos || []).forEach(risk => {
       const agenteColor = RISK_COLORS[risk.agente] || {};
       const classifStr = riskLabel(risk.probabilidade, risk.severidade);
       const classifColor = CLASS_COLORS[classifStr] || {};
       
+      // Map data to correct columns:
+      // Técnica Utilizada = risk.tecnicaUsada (e.g. "Critério Qualitativo")
+      // Metodologia = "Matriz 6x4" (always)
+      // Resultado = risk.resultado
       gheRows.push(tblRow(
-        cell(risk.agente, { align: AlignmentType.CENTER, bg: agenteColor.bg, fontColor: agenteColor.color, bold: true, size: 12 }),
-        valCell(risk.fator, { size: 12 }), valCell(risk.fonteGeradora, { size: 12 }), 
-        valCell(risk.trajetoria || '', { size: 12 }), valCell(risk.frequencia || '', { size: 12 }), valCell('', { size: 12 }), // L.T.
-        valCell(risk.nivelAcao || '', { size: 12 }), valCell(risk.resultado || '', { size: 12 }), valCell(risk.tecnicaUsada || '', { size: 12 }), 
-        valCell(risk.medidasControle || '', { size: 12 }), valCell(risk.eficaz || '', { align: AlignmentType.CENTER, size: 12 }), 
-        valCell('Matriz 6x4', { align: AlignmentType.CENTER, size: 12 }), // Metodologia
-        valCell(risk.probabilidade || '', { align: AlignmentType.CENTER, size: 12 }),
-        valCell(risk.severidade || '', { align: AlignmentType.CENTER, size: 12 }), 
-        cell(classifStr, { align: AlignmentType.CENTER, bold: true, bg: classifColor.bg, fontColor: classifColor.color, size: 12 })
+        cell(risk.agente, { align: AlignmentType.CENTER, bg: agenteColor.bg, fontColor: agenteColor.color, bold: true, size: IRO_SZ }),
+        valCell(risk.fator, { size: IRO_SZ }), 
+        valCell(risk.fonteGeradora, { size: IRO_SZ }), 
+        valCell(risk.trajetoria || '', { size: IRO_SZ }),       // Trajetória
+        valCell(risk.frequencia || '', { size: IRO_SZ }),       // Frequência Exposição
+        valCell('', { size: IRO_SZ }),                          // L.T.
+        valCell(risk.nivelAcao || '', { size: IRO_SZ }),        // Nível de Ação
+        valCell(risk.resultado || '', { size: IRO_SZ }),        // Resultado
+        valCell(risk.tecnicaUsada || 'Critério Qualitativo', { size: IRO_SZ }),  // Técnica Utilizada
+        valCell(risk.medidasControle || '', { size: IRO_SZ }),  // Descrição das Medidas
+        valCell(risk.eficaz || '', { align: AlignmentType.CENTER, size: IRO_SZ }), // Eficaz (S/N)
+        valCell('Matriz 6x4', { align: AlignmentType.CENTER, size: IRO_SZ }),     // Metodologia
+        valCell(risk.probabilidade || '', { align: AlignmentType.CENTER, size: IRO_SZ }),  // Probabilidade
+        valCell(risk.severidade || '', { align: AlignmentType.CENTER, size: IRO_SZ }),     // Severidade
+        cell(classifStr, { align: AlignmentType.CENTER, bold: true, bg: classifColor.bg, fontColor: classifColor.color, size: IRO_SZ }) // Classificação
       ));
     });
+    
+    // Recomendações row
     gheRows.push(new TableRow({
       children: [new TableCell({
         children: [new Paragraph({ children: [t('Recomendação de Novas Medidas de Controle: ', { bold: true, size: SZ.sm }), t(ghe.recomendacoes || '', { size: SZ.sm })], spacing: { after: 0 } })],
@@ -423,20 +519,48 @@ async function generatePGRTR(data) {
     }));
     sIroEpi.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: gheRows }));
     
+    // Page break between GHEs
+    sIroEpi.push(...blank(1));
     if (gi < data.ghes.length - 1) {
       sIroEpi.push(new Paragraph({ children: [new PageBreak()] }));
     }
   });
 
   // EPI Matrix
-  sIroEpi.push(new Paragraph({ children: [new PageBreak()] })); // Page break before EPI inside landscape
-  sIroEpi.push(hdr('MATRIZ DE EPI POR FUNÇÃO', '4.'));
+  sIroEpi.push(new Paragraph({ children: [new PageBreak()] }));
+  sIroEpi.push(hdr('MATRIZ DE EPI POR FUNÇÃO', `${N.epi}.`));
   
+  // Determine EPIs and functions from the epiMatrix (primary) or epis array (fallback)
   const matrix = data.epiMatrix || {};
   const allFuncs = Object.keys(matrix);
   const funcsToShow = allFuncs.length > 0 ? allFuncs : (data.funcionarios || []).map(f => f.funcao).filter(f => f);
   const uniqueFuncs = [...new Set(funcsToShow)];
-  const epis = data.epis || [];
+  
+  // Determine which EPIs to show - from epiMatrix keys or fallback to EPI_NAMES
+  let epiNamesToShow = [];
+  if (allFuncs.length > 0) {
+    // Collect all EPI names that appear in the matrix
+    const epiSet = new Set();
+    allFuncs.forEach(func => {
+      if (matrix[func]) {
+        Object.keys(matrix[func]).forEach(epiName => {
+          epiSet.add(epiName);
+        });
+      }
+    });
+    epiNamesToShow = EPI_NAMES.filter(e => epiSet.has(e));
+    // Also add any that are in the set but not in EPI_NAMES
+    epiSet.forEach(e => { if (!epiNamesToShow.includes(e)) epiNamesToShow.push(e); });
+    if (epiNamesToShow.length === 0) epiNamesToShow = EPI_NAMES;
+  } else {
+    epiNamesToShow = EPI_NAMES;
+  }
+  
+  // Also support data.epis (array of {nome, ca}) if epiMatrix is empty
+  const epiCAMap = {};
+  (data.epis || []).forEach(epi => {
+    if (epi && epi.nome) epiCAMap[epi.nome] = epi.ca || '-';
+  });
   
   const epiRows = [];
   const epiCols = 2 + uniqueFuncs.length;
@@ -453,7 +577,7 @@ async function generatePGRTR(data) {
   
   uniqueFuncs.forEach(func => {
     headerCells.push(new TableCell({
-      children: [p(func, { size: 12, bold: true, align: AlignmentType.CENTER, color: CLR.white })],
+      children: [p(func, { size: 14, bold: true, align: AlignmentType.CENTER, color: CLR.white, after: 0 })],
       verticalAlign: VerticalAlign.CENTER,
       textDirection: TextDirection.BOTTOM_TO_TOP_LEFT_TO_RIGHT,
       shading: { type: ShadingType.SOLID, color: CLR.headerBg },
@@ -469,13 +593,14 @@ async function generatePGRTR(data) {
     height: { value: 3000, rule: HeightRule.EXACT }
   }));
 
-  epis.forEach(epi => {
+  epiNamesToShow.forEach(epiName => {
+    const ca = epiCAMap[epiName] || '-';
     const rowCells = [
-      valCell(epi.nome, { size: 14 }),
-      valCell(epi.ca || '-', { size: 14, align: AlignmentType.CENTER })
+      valCell(epiName, { size: 14 }),
+      valCell(ca, { size: 14, align: AlignmentType.CENTER })
     ];
     uniqueFuncs.forEach(func => {
-      const checked = matrix[func] && matrix[func][epi.nome];
+      const checked = matrix[func] && matrix[func][epiName];
       rowCells.push(cell(checked ? 'X' : '', { align: AlignmentType.CENTER, bold: true, size: 16 }));
     });
     epiRows.push(tblRow(...rowCells));
@@ -486,53 +611,67 @@ async function generatePGRTR(data) {
 
   // --- SECTION 4: PROCEDIMENTOS (Portrait) ---
   const sProcs = [];
-  sProcs.push(hdr('MATRIZ DE TREINAMENTOS', '5.'));
+  sProcs.push(hdr('MATRIZ DE TREINAMENTOS', `${N.treinamentos}.`));
   const treinRows = [titleRow('TREINAMENTOS APLICÁVEIS', 2), tblRow(hCell('Descrição do Treinamento', { width: 50 }), hCell('Funções / Atividades', { width: 50 }))];
   (data.treinamentos || []).forEach(tr => treinRows.push(tblRow(valCell(tr.descricao), valCell(tr.funcoes))));
   sProcs.push(tbl(treinRows));
   
   sProcs.push(...blank(1));
-  sProcs.push(hdr('MATRIZ DE DOCUMENTOS', '6.'));
+  sProcs.push(hdr('MATRIZ DE DOCUMENTOS', `${N.documentos}.`));
   const docRows = [titleRow('DOCUMENTOS OBRIGATÓRIOS', 2), tblRow(hCell('Descrição do Documento', { width: 65 }), hCell('Norma de Referência', { width: 35 }))];
   (data.documentos || []).forEach(d => docRows.push(tblRow(valCell(d.descricao), valCell(d.norma))));
   sProcs.push(tbl(docRows));
 
+  // Procedure sections - each gets its own header and content
   const procs = data.procedimentos || {};
   const procSections = [
-    { n: '7.', t: 'PROCEDIMENTOS NO TRABALHO COM ANIMAIS', f: 'animais' }, { n: '8.', t: 'AGROTÓXICOS NO PGRTR', f: 'agrotoxicos' },
-    { n: '9.', t: 'CONDIÇÕES CLIMÁTICAS ADVERSAS', f: 'climaticas' }, { n: '10.', t: 'TRABALHO PENOSO', f: 'penoso' },
-    { n: '11.', t: 'TRABALHO EM ZONA DE RISCO ELÉTRICO', f: 'eletrico' }, { n: '12.', t: 'CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR', f: 'transito' },
-    { n: '13.', t: 'GESTÃO DE RESÍDUOS', f: 'residuos' }, { n: '14.', t: 'ACIDENTES DE TRABALHO', f: 'acidentes' }
+    { n: `${N.animais}.`, t: 'PROCEDIMENTOS NO TRABALHO COM ANIMAIS', f: 'animais' },
+    { n: `${N.agrotoxicos}.`, t: 'AGROTÓXICOS NO PGRTR', f: 'agrotoxicos' },
+    { n: `${N.climaticas}.`, t: 'CONDIÇÕES CLIMÁTICAS ADVERSAS', f: 'climaticas' },
+    { n: `${N.penoso}.`, t: 'TRABALHO PENOSO', f: 'penoso' },
+    { n: `${N.eletrico}.`, t: 'TRABALHO EM ZONA DE RISCO ELÉTRICO', f: 'eletrico' },
+    { n: `${N.transito}.`, t: 'CONDIÇÕES INTERNAS DE TRÂNSITO VEICULAR', f: 'transito' },
+    { n: `${N.residuos}.`, t: 'GESTÃO DE RESÍDUOS', f: 'residuos' },
+    { n: `${N.acidentes}.`, t: 'ACIDENTES DE TRABALHO', f: 'acidentes' }
   ];
   procSections.forEach(sec => {
     sProcs.push(hdr(sec.t, sec.n));
-    (procs[sec.f] || '').split('\n').filter(l => l.trim()).forEach(line => sProcs.push(p(line.trim(), { after: 60 })));
+    const content = procs[sec.f] || '';
+    if (content.trim()) {
+      content.split('\n').filter(l => l.trim()).forEach(line => sProcs.push(p(line.trim(), { after: 60 })));
+    }
+    sProcs.push(...blank(1));
   });
 
-  sProcs.push(hdr('DIRETRIZES DA MEDICINA OCUPACIONAL', '15.'));
+  sProcs.push(hdr('DIRETRIZES DA MEDICINA OCUPACIONAL', `${N.medicina}.`));
   sProcs.push(p('As ações de saúde ocupacional referentes ao PGRTR são de responsabilidade do médico coordenador do PCMSO e da empresa, e incluem: monitoramento da saúde dos trabalhadores expostos aos riscos identificados no inventário; controle da imunização ativa dos empregados relacionada a riscos ocupacionais conforme o Ministério da Saúde.'));
+  sProcs.push(...blank(1));
   
-  sProcs.push(hdr('TIPOS DE EXAMES OCUPACIONAIS', '16.'));
+  sProcs.push(hdr('TIPOS DE EXAMES OCUPACIONAIS', `${N.examesTipos}.`));
   ['• Admissional: realizado antes que o empregado assuma suas atividades;', '• Periódico: realizado em intervalos regulares conforme os riscos identificados;', '• Retorno ao trabalho: após ausência superior a 30 dias por motivo de doença ou acidente;', '• Mudança de risco: antes da mudança de função que implique exposição a risco diferente;', '• Demissional: realizado até a data de homologação da demissão.'].forEach(e => sProcs.push(p(e, { after: 60 })));
+  sProcs.push(...blank(1));
   
-  sProcs.push(hdr('PLANO DE VACINAÇÃO', '17.'));
+  sProcs.push(hdr('PLANO DE VACINAÇÃO', `${N.vacinacao}.`));
   ['• Hepatite B: todos os funcionários com exposição a riscos biológicos e objetos perfurocortantes;', '• Dupla adulto – tétano e difteria: todos os funcionários com risco de lesões abertas;', '• Demais vacinas conforme indicação do médico do trabalho e histórico ocupacional.'].forEach(v => sProcs.push(p(v, { after: 60 })));
+  sProcs.push(...blank(1));
   
-  sProcs.push(hdr('AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR', '18.'));
+  sProcs.push(hdr('AÇÕES PRIMÁRIAS DE PREVENÇÃO À SAÚDE DO TRABALHADOR', `${N.acoesPrimarias}.`));
   ['• Treinamentos sobre percepção de riscos e importância do uso de EPIs;', '• Realização de palestras relacionadas à saúde;', '• Cartazes e orientações sobre prevenção (Diabetes, DST, COVID, Tabagismo, Depressão, etc.);', '• Implantação de Ginástica Laboral;', '• Campanhas de incentivo à vacinação.'].forEach(a => sProcs.push(p(a, { after: 60 })));
+  sProcs.push(...blank(1));
   
-  sProcs.push(hdr('MATERIAIS PARA PRIMEIROS SOCORROS', '19.'));
+  sProcs.push(hdr('MATERIAIS PARA PRIMEIROS SOCORROS', `${N.primeirosSocorros}.`));
   sProcs.push(p('Todo estabelecimento deverá estar equipado com material necessário à prestação dos primeiros socorros...'));
   sProcs.push(p('Instrumentos:', { bold: true })); sProcs.push(p('• Termômetro; Tesoura sem ponta; Pinça.'));
   sProcs.push(p('Material para Curativo:', { bold: true })); sProcs.push(p('• Luvas de Látex; Polvidine; Algodão Hidrófilo; Gaze esterilizada; Esparadrapo; Ataduras de crepe (4 e 10 cm); Curativo adesivo (Band Aid); Tampão Oftálmico; Cotonetes.'));
   sProcs.push(p('Antissépticos:', { bold: true })); sProcs.push(p('• Solução de Iodo; Soro Fisiológico 0,9%.'));
+  sProcs.push(...blank(1));
   
-  sProcs.push(hdr('ASO – ATESTADO DE SAÚDE OCUPACIONAL', '20.'));
+  sProcs.push(hdr('ASO – ATESTADO DE SAÚDE OCUPACIONAL', `${N.aso}.`));
   sProcs.push(p('Para todo exame clínico ocupacional realizado, os médicos examinadores autorizados no presente PGRTR irão emitir o ASO...'));
 
   // --- SECTION 5: PLANOS (Landscape) ---
   const sPlanos = [];
-  sPlanos.push(hdr('PLANEJAMENTO DOS EXAMES OCUPACIONAIS', '21.'));
+  sPlanos.push(hdr('PLANEJAMENTO DOS EXAMES OCUPACIONAIS', `${N.planejamentoExames}.`));
   const exRows = [
     titleRow('PLANEJAMENTO DOS EXAMES OCUPACIONAIS', 9),
     tblRow(hCell('Função', { rowspan: 2 }), hCell('Agentes Ambientais (Riscos)', { rowspan: 2 }), hCell('Exame', { rowspan: 2 }), hCell('Código eSocial', { rowspan: 2 }), hCell('Periodicidade dos Exames', { colspan: 5 })),
@@ -545,8 +684,9 @@ async function generatePGRTR(data) {
     cell(e.retornoTrabalho ? 'X' : '', { align: AlignmentType.CENTER, bold: true })
   )));
   sPlanos.push(tbl(exRows));
+  sPlanos.push(...blank(1));
   
-  sPlanos.push(hdr('DANOS À SAÚDE', '22.'));
+  sPlanos.push(hdr('DANOS À SAÚDE', `${N.danosSaude}.`));
   const dmgRows = [titleRow('TABELA DE FATOR DE RISCO x PREJUÍZO À SAÚDE', 3), tblRow(hCell('Agente de Risco', { width: 15 }), hCell('Fator de Risco', { width: 30 }), hCell('Possível Dano à Saúde', { width: 55 }))];
   RISK_DAMAGES_TABLE.forEach(r => {
     const colorOpts = RISK_COLORS[r.agente] || {};
@@ -557,8 +697,9 @@ async function generatePGRTR(data) {
     ));
   });
   sPlanos.push(tbl(dmgRows));
+  sPlanos.push(...blank(1));
   
-  sPlanos.push(hdr('CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO', '23.'));
+  sPlanos.push(hdr('CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO', `${N.cat}.`));
   const catRows = [titleRow('REGISTRO DE CAT', 6), tblRow(hCell('Data'), hCell('Nº da CAT'), hCell('Tipo da CAT'), hCell('Tipo do Acidente'), hCell('Parte Atingida'), hCell('CID'))];
   if (data.cats && data.cats.length > 0) {
     data.cats.forEach(c => catRows.push(tblRow(cell(fmtDate(c.data) || '', { align: AlignmentType.CENTER }), valCell(c.numeroCat), valCell(c.tipoCat), valCell(c.tipoAcidente), valCell(c.parteAtingida), valCell(c.cid))));
@@ -566,8 +707,9 @@ async function generatePGRTR(data) {
     for (let i = 0; i < 3; i++) catRows.push(tblRow(valCell(''), valCell(''), valCell(''), valCell(''), valCell(''), valCell('')));
   }
   sPlanos.push(tbl(catRows));
+  sPlanos.push(...blank(1));
   
-  sPlanos.push(hdr('PLANO ANUAL DE AÇÕES', '24.'));
+  sPlanos.push(hdr('PLANO ANUAL DE AÇÕES', `${N.planoAnual}.`));
   sPlanos.push(p('A ordem de prioridades das ações do presente PGR será definidas de acordo a metodologia da Matriz GUT através do produto da nota da gravidade, urgência e tendência constante na tabela abaixo.'));
   
   const gutRows = [titleRow('Metodologia da Matriz GUT', 4), tblRow(hCell('Nota'), hCell('Gravidade'), hCell('Urgência'), hCell('Tendência'))];
@@ -623,7 +765,7 @@ async function generatePGRTR(data) {
 
   // --- SECTION 6: ENCERRAMENTO (Portrait) ---
   const sEnc = [];
-  sEnc.push(hdr('ENCERRAMENTO', '25.'));
+  sEnc.push(hdr('ENCERRAMENTO', `${N.encerramento}.`));
   sEnc.push(p('O presente PGRTR constitui-se em instrumento de gestão dos riscos ocupacionais no trabalho rural, elaborado com base nas normas regulamentadoras vigentes, visando a prevenção de acidentes e doenças do trabalho e a preservação da saúde e integridade física dos trabalhadores rurais.'));
   sEnc.push(p('Este programa deverá ser revisado anualmente ou sempre que houver modificações nas condições de trabalho que possam alterar os riscos ocupacionais identificados.'));
   sEnc.push(...blank(3));
