@@ -1281,17 +1281,12 @@ async function handleImportDocx(file) {
   const fileNameSpan = document.getElementById('importFileName');
   if (fileNameSpan) fileNameSpan.textContent = file.name;
 
-  const overlay = document.getElementById('loadingOverlay');
-  const spinnerText = overlay.querySelector('.loading-spinner__text');
-  const spinnerSub = overlay.querySelector('.loading-spinner__sub');
-  
-  const originalText = spinnerText ? spinnerText.textContent : 'Gerando relatório PGRTR...';
-  const originalSub = spinnerSub ? spinnerSub.textContent : 'Isso pode levar alguns segundos';
+  if (typeof window.startAiAnimation === 'function') {
+    window.startAiAnimation(file.name);
+  }
 
-  if (spinnerText) spinnerText.textContent = 'Analisando documento com IA...';
-  if (spinnerSub) spinnerSub.textContent = 'Extraindo e estruturando todos os dados do PGRTR antigo';
-  
-  overlay.classList.add('active');
+  // Desativado: o usuário pediu para não usar overlay na IA
+  // overlay.classList.add('active');
 
   try {
     const base64 = await toBase64(file);
@@ -1301,8 +1296,6 @@ async function handleImportDocx(file) {
     let data;
 
     if (isPdf) {
-      if (spinnerText) spinnerText.textContent = 'Enviando documento para a IA...';
-      if (spinnerSub) spinnerSub.textContent = 'Aguarde enquanto a IA lê e processa as informações (ignorando limite de 4.5MB)';
 
       const configRes = await fetch('/api/config');
       const { apiKey } = await configRes.json();
@@ -1365,7 +1358,7 @@ Leia o arquivo PDF em anexo com perfeição e extraia absolutamente TUDO.`;
         generationConfig: { temperature: 0.1 }
       };
 
-      const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1376,13 +1369,40 @@ Leia o arquivo PDF em anexo com perfeição e extraia absolutamente TUDO.`;
         throw new Error('Erro na IA: ' + (err.error?.message || aiRes.statusText));
       }
 
-      const aiData = await aiRes.json();
-      let aiText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      aiText = aiText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/g, '').trim();
-      
-      let parsedData = JSON.parse(aiText);
+      const reader = aiRes.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let fullAiText = "";
+      let currentProgress = 92;
 
-      if (spinnerText) spinnerText.textContent = 'Processando e estruturando dados...';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6);
+            if (dataStr.trim() === '[DONE]') continue;
+            try {
+              const dataObj = JSON.parse(dataStr);
+              const text = dataObj.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              fullAiText += text;
+              
+              currentProgress += 0.2; 
+              if (typeof window.updateAiProgress === 'function') {
+                window.updateAiProgress(currentProgress);
+              }
+            } catch (e) {
+              // ignore parse errors on incomplete chunk pieces
+            }
+          }
+        }
+      }
+
+      let aiText = fullAiText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/g, '').trim();
+      let parsedData = JSON.parse(aiText);
 
       const sanitizeRes = await fetch('/api/sanitize-import', {
         method: 'POST',
@@ -1583,14 +1603,23 @@ Leia o arquivo PDF em anexo com perfeição e extraia absolutamente TUDO.`;
     // Refresh UI
     renderAll();
     saveToStorage();
+    
+    if (typeof window.completeAiAnimation === 'function') {
+      await window.completeAiAnimation();
+    }
+    
     showToast('Importação concluída!', `Dados extraídos: ${appData.funcionarios.length} funções, ${appData.ghes.length} GHEs, ${appData.exames.length} exames.`);
   } catch (error) {
     console.error('Import error:', error);
     showToast('Erro ao importar', error.message || 'Houve um erro no processamento do arquivo', 'error');
   } finally {
-    overlay.classList.remove('active');
-    if (spinnerText) spinnerText.textContent = originalText;
-    if (spinnerSub) spinnerSub.textContent = originalSub;
+    // Desativado: overlay não é mais usado aqui
+    // overlay.classList.remove('active');
+    
+    if (typeof window.stopAiAnimation === 'function') {
+      window.stopAiAnimation();
+    }
+
     // Hide process button and clear input so it can be re-selected if wanted
     const btnProcessarIA = document.getElementById('btnProcessarIA');
     const importInput = document.getElementById('importDocxFile');
@@ -1647,3 +1676,35 @@ function escapeAttr(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+// =============================================
+// Theme Toggle
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  
+  // Check saved theme or preference
+  const savedTheme = localStorage.getItem('pgrtr_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    document.body.classList.add('dark-mode');
+    updateThemeIcon(true);
+  }
+  
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('pgrtr_theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+  });
+  
+  function updateThemeIcon(isDark) {
+    if (isDark) {
+      themeIcon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'; // Sun icon for switching to light
+    } else {
+      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>'; // Moon icon for switching to dark
+    }
+  }
+});

@@ -17,6 +17,7 @@
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
+    <!-- Default Spinner -->
     <div class="loading-spinner">
       <div class="loading-spinner__circle"></div>
       <div class="loading-spinner__text">Gerando relatório PGRTR...</div>
@@ -38,6 +39,13 @@
   <div class="app">
     <!-- Header -->
     <header class="header">
+      <div class="header__top-actions" style="position: absolute; right: 0; top: var(--space-xl); display: flex; gap: 10px;">
+        <button id="themeToggle" class="btn btn--icon" title="Alternar Modo Escuro" style="border-radius: 0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
       <div class="header__badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
         NR 31
@@ -67,6 +75,32 @@
           </div>
           <span id="importFileName" style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-top: 0.5rem;">Nenhum arquivo selecionado</span>
         </div>
+      </div>
+    </div>
+
+    <!-- AI Animation (NR31) Inline -->
+    <div class="ai-anim-wr" id="aiAnimWr" style="display: none; width: 100%; margin-top: 2rem; margin-bottom: 2rem;">
+      <div class="ai-anim-hd">
+        <div class="ai-anim-pill">
+          <div class="ai-anim-sd" id="aiAnimSd"></div>
+          <span id="aiAnimSt">Aguardando documento…</span>
+        </div>
+      </div>
+      <div class="ai-anim-gr">
+        <div class="ai-anim-doc" id="aiAnimDoc">
+          <div class="ai-anim-dh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-secondary)"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+            <span class="ai-anim-dn" id="aiAnimFileName">documento.pdf</span>
+            <span class="ai-anim-dbadge">DOC</span>
+          </div>
+          <div class="ai-anim-dl" id="aiAnimDl"></div>
+          <div class="ai-anim-bm" id="aiAnimBm"><div class="ai-anim-bg"></div></div>
+        </div>
+        <div class="ai-anim-ap" id="aiAnimAp"></div>
+      </div>
+      <div class="ai-anim-pr">
+        <div class="ai-anim-pb"><div class="ai-anim-pf" id="aiAnimPf"></div></div>
+        <div class="ai-anim-pp" id="aiAnimPp">0%</div>
       </div>
     </div>
 
@@ -718,6 +752,227 @@
     </div>
   </div>
 
+  <script>
+    // AI Animation Logic (NR31)
+    let aiAnimActive = false;
+    let aiAnimTimeout;
+
+    const LN = [
+      {w:88,t:null},{w:70,t:'e'},{w:85,t:null},{w:52,t:'d'},
+      {w:92,t:null},{w:64,t:null},{w:78,t:'k'},{w:56,t:null},
+      {w:88,t:null},{w:72,t:'e'},{w:80,t:null},{w:74,t:null},
+      {w:60,t:'d'},{w:90,t:null},{w:46,t:'k'},{w:86,t:null},
+      {w:76,t:null},{w:54,t:null}
+    ];
+
+    const CARDS = [
+      {id:'e',cls:'te',lbl:'Dados do Empregador (NR 31.5)',
+       tags:['Razão Social', 'CNPJ', 'CNAE', 'Grau de Risco'],tl:1},
+      {id:'d',cls:'td',lbl:'Inventário de Riscos (GHE)',
+       tags:['Físicos', 'Químicos', 'Biológicos', 'Ergonômicos', 'Acidentes'],tl:3},
+      {id:'k',cls:'tk',lbl:'Plano de Ação e Exames',
+       tags:['Medidas de Controle', 'ASO', 'EPIs', 'Treinamentos'],tl:6},
+      {id:'s',cls:'tsum',lbl:'Matriz NR31 estruturada',tags:[],isConf:true,tl:14}
+    ];
+
+    function initAiDom() {
+      const dl=document.getElementById('aiAnimDl');
+      if(dl && dl.children.length === 0) {
+        LN.forEach((_,i)=>{
+          const d=document.createElement('div');
+          d.className='ai-anim-dli';d.id='ai-li'+i;
+          d.style.width=LN[i].w+'%';
+          dl.appendChild(d);
+        });
+      }
+      const ap=document.getElementById('aiAnimAp');
+      if(ap && ap.children.length === 0) {
+        CARDS.forEach(c=>{
+          const d=document.createElement('div');
+          d.className='ai-anim-ac '+c.cls;d.id='ai-ac'+c.id;
+          d.innerHTML=`<div class="ai-anim-al"><div class="ai-anim-ald"></div><span class="ai-anim-alt">${c.lbl}</span></div>
+            <div class="ai-anim-at">${c.tags.map(t=>`<span class="ai-anim-atg">${t}</span>`).join('')}
+            ${c.isConf?`<div class="ai-anim-cfr"><span class="ai-anim-cfl">Confiança</span><div class="ai-anim-cfb"><div class="ai-anim-cff" id="ai-cf"></div></div><span class="ai-anim-cfp" id="ai-cp">0%</span></div>`:''}</div>`;
+          ap.appendChild(d);
+        });
+      }
+    }
+
+    const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+    function setS(txt,cls){
+      const st = document.getElementById('aiAnimSt');
+      const sd = document.getElementById('aiAnimSd');
+      if(st) st.textContent=txt;
+      if(sd) sd.className='ai-anim-sd'+(cls?' '+cls:'');
+    }
+    function setP(v){
+      const r=Math.round(v);
+      const pf = document.getElementById('aiAnimPf');
+      const pp = document.getElementById('aiAnimPp');
+      if(pf) pf.style.width=r+'%';
+      if(pp) pp.textContent=r+'%';
+    }
+
+    function showCard(id){
+      if(!aiAnimActive) return;
+      const c=document.getElementById('ai-ac'+id);if(!c)return;
+      c.classList.add('show');
+      c.querySelectorAll('.ai-anim-atg').forEach((t,i)=>setTimeout(()=>{ if(aiAnimActive) t.classList.add('show')},160+i*140));
+      if(id==='s'){
+        setTimeout(()=>{
+          if(!aiAnimActive) return;
+          const cf=document.getElementById('ai-cf'),cp=document.getElementById('ai-cp');
+          if(cf)cf.style.width='98%';if(cp)cp.textContent='98%';
+        },600);
+      }
+    }
+
+    function flash(i){
+      if(!aiAnimActive) return;
+      const el=document.getElementById('ai-li'+i);if(!el)return;
+      const t=LN[i].t;
+      if(t){
+        el.classList.add('fl','f'+t); 
+        setTimeout(()=>{ if(aiAnimActive) el.classList.remove('fl','f'+t)},520);
+      } else {
+        el.style.background='var(--bg-secondary)';
+        setTimeout(()=>{ if(aiAnimActive) el.style.background=''},320);
+      }
+    }
+
+    const trg={};CARDS.forEach(c=>{trg[c.tl]=c.id;});
+
+    let aiAnimCompleteTrigger = null;
+
+    async function runAiAnim(){
+      if(!aiAnimActive) return;
+      
+      document.querySelectorAll('.ai-anim-ac').forEach(c=>c.classList.remove('show'));
+      document.querySelectorAll('.ai-anim-atg').forEach(t=>t.classList.remove('show'));
+      document.querySelectorAll('.ai-anim-dli').forEach((l,i)=>{l.className='ai-anim-dli';l.style.background='';l.style.width=LN[i].w+'%';});
+      const cf=document.getElementById('ai-cf'),cp=document.getElementById('ai-cp');
+      if(cf)cf.style.width='0%';if(cp)cp.textContent='0%';
+      
+      const bm=document.getElementById('aiAnimBm');
+      if(bm) { bm.style.opacity='1';bm.style.display='none'; }
+      setP(0);setS('Aguardando documento…');
+
+      await delay(600);
+      if(!aiAnimActive) return;
+      setS('Lendo e extraindo documento…','scanning');
+
+      const doc=document.getElementById('aiAnimDoc');
+      if(!doc) return;
+      const dr=doc.getBoundingClientRect();
+      const l0=document.getElementById('ai-li0');
+      if(!l0) return;
+      const fe=l0.getBoundingClientRect();
+      
+      if(bm) {
+        bm.style.transition='none';
+        bm.style.top=(fe.top-dr.top+fe.height/2-1)+'px';
+        bm.style.display='block';
+      }
+
+      for(let i=0;i<LN.length;i++){
+        if(!aiAnimActive) return;
+        if(i>0 && bm){
+          const li=document.getElementById('ai-li'+i);
+          if(li) {
+            const lr=li.getBoundingClientRect();
+            bm.style.transition='top 0.2s linear';
+            bm.style.top=(lr.top-dr.top+lr.height/2-1)+'px';
+          }
+        }
+        flash(i);
+        setP((i+1)/LN.length*92);
+        if(trg[i]){const cid=trg[i];setTimeout(()=>showCard(cid),260);}
+        await delay(230);
+      }
+
+      if(!aiAnimActive) return;
+      setS('Cruzando e processando dados da IA...','scanning');
+      
+      // Wait for real AI progress to finish
+      let isWaiting = true;
+      aiAnimCompleteTrigger = () => { isWaiting = false; };
+      
+      let currI = LN.length - 1;
+      let bounceDir = -1;
+      while(isWaiting && aiAnimActive) {
+        currI += bounceDir;
+        if(currI <= 0) { currI = 0; bounceDir = 1; }
+        if(currI >= LN.length - 1) { currI = LN.length - 1; bounceDir = -1; }
+        
+        if(bm) {
+          const li=document.getElementById('ai-li'+currI);
+          if(li) {
+            const lr=li.getBoundingClientRect();
+            bm.style.transition='top 0.15s linear';
+            bm.style.top=(lr.top-dr.top+lr.height/2-1)+'px';
+          }
+        }
+        flash(currI);
+        await delay(150);
+      }
+
+      if(!aiAnimActive) return;
+
+      setP(100);
+      setS('Análise estruturada com sucesso!','done');
+      if(bm) {
+        bm.style.transition='top 0.2s linear, opacity 0.4s';
+        bm.style.opacity='0';
+      }
+      await delay(400);
+      if(bm) bm.style.display='none';
+
+      // Keep it visible for 1.2s before resolving
+      await delay(1200);
+      
+      if(window._aiAnimResolve) {
+        window._aiAnimResolve();
+        window._aiAnimResolve = null;
+      }
+    }
+
+    window.startAiAnimation = function(filename) {
+      const fnLabel = document.getElementById('aiAnimFileName');
+      if(fnLabel) fnLabel.textContent = filename || 'documento.pdf';
+      const spinner = document.querySelector('.loading-spinner');
+      if(spinner) spinner.style.display = 'none';
+      const aiWr = document.getElementById('aiAnimWr');
+      if(aiWr) aiWr.style.display = 'block';
+      aiAnimActive = true;
+      aiAnimCompleteTrigger = null;
+      initAiDom();
+      runAiAnim();
+    };
+
+    window.updateAiProgress = function(val) {
+      if(!aiAnimActive) return;
+      if(val > 99) val = 99; // cap at 99 until truly complete
+      setP(val);
+    };
+
+    window.completeAiAnimation = function() {
+      if(!aiAnimActive) return Promise.resolve();
+      return new Promise(resolve => {
+        window._aiAnimResolve = resolve;
+        if(aiAnimCompleteTrigger) aiAnimCompleteTrigger();
+      });
+    };
+
+    window.stopAiAnimation = function() {
+      aiAnimActive = false;
+      aiAnimCompleteTrigger = null;
+      const spinner = document.querySelector('.loading-spinner');
+      if(spinner) spinner.style.display = '';
+      const aiWr = document.getElementById('aiAnimWr');
+      if(aiWr) aiWr.style.display = 'none';
+    };
+  </script>
   <script src="app.js?v=5"></script>
 </body>
 </html>

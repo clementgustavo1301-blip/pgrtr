@@ -7,7 +7,7 @@ const docx = require('docx');
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, WidthType, BorderStyle, PageBreak, Header, Footer, PageNumber, NumberFormat,
-  VerticalAlign, ShadingType, PageOrientation, TextDirection, HeightRule,
+  VerticalAlign, ShadingType, PageOrientation, TextDirection, HeightRule, TableLayoutType,
   convertInchesToTwip
 } = docx;
 
@@ -181,7 +181,11 @@ function valCell(text, opts = {}) {
 
 function tblRow(...cells) { return new TableRow({ children: cells, cantSplit: true }); }
 function hdrRow(...cells) { return new TableRow({ children: cells, tableHeader: true, cantSplit: true }); }
-function tbl(rows, width = 100) { return new Table({ width: { size: width, type: WidthType.PERCENTAGE }, rows }); }
+function tbl(rows, colWidths = []) {
+  const opts = { width: { size: 100, type: WidthType.PERCENTAGE }, layout: TableLayoutType.FIXED, rows };
+  if (colWidths && colWidths.length > 0) opts.columnWidths = colWidths;
+  return new Table(opts);
+}
 function titleRow(text, cols) { return tblRow(cell(text, { colspan: cols, bold: true, bg: CLR.primary, fontColor: CLR.white, align: AlignmentType.CENTER, size: SZ.sm })); }
 
 // =============================================
@@ -196,6 +200,8 @@ function buildHeader(data) {
     children: [
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [1500, 7500],
         rows: [
           new TableRow({
             children: [
@@ -215,11 +221,13 @@ function buildHeader(data) {
                 children: [
                   new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
+                    layout: TableLayoutType.FIXED,
+                    columnWidths: [5500, 2000],
                     rows: [
                       new TableRow({
                         children: [
-                          cell(`Data de Revisão do Plano de Ação: ${dEmit}`, { width: 80, noBorder: true }),
-                          cell('Revisão: 01', { width: 20, noBorder: true })
+                          cell(`Data de Revisão do Plano de Ação: ${dEmit}`, { noBorder: true }),
+                          cell('Revisão: 01', { noBorder: true })
                         ]
                       })
                     ]
@@ -235,12 +243,14 @@ function buildHeader(data) {
                 children: [
                   new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
+                    layout: TableLayoutType.FIXED,
+                    columnWidths: [3000, 3000, 1500],
                     rows: [
                       new TableRow({
                         children: [
-                          cell(`Data de Emissão do PGRTR: ${dEmit}`, { width: 40, noBorder: true }),
-                          cell(`Data de Revisão do PGRTR: ${dEmit}`, { width: 40, noBorder: true }),
-                          cell('Doc nº 01', { width: 20, noBorder: true })
+                          cell(`Data de Emissão do PGRTR: ${dEmit}`, { noBorder: true }),
+                          cell(`Data de Revisão do PGRTR: ${dEmit}`, { noBorder: true }),
+                          cell('Doc nº 01', { noBorder: true })
                         ]
                       })
                     ]
@@ -383,7 +393,7 @@ async function generatePGRTR(data) {
   sIntro.push(hdr('IDENTIFICAÇÃO DO EMPREGADOR RURAL', '2.'));
   sIntro.push(tbl([
     titleRow('DADOS CADASTRAIS DA EMPRESA', 2),
-    tblRow(lblCell('Razão Social', { width: 30 }), valCell(emp.razaoSocial, { width: 70 })),
+    tblRow(lblCell('Razão Social'), valCell(emp.razaoSocial)),
     tblRow(lblCell('Nome Fantasia'), valCell(emp.nomeFantasia)),
     tblRow(lblCell('CNPJ'), valCell(emp.cnpj)),
     tblRow(lblCell('Endereço'), valCell(emp.endereco)),
@@ -393,47 +403,47 @@ async function generatePGRTR(data) {
     tblRow(lblCell('UF'), valCell(emp.uf)),
     tblRow(lblCell('Telefone'), valCell(emp.telefone)),
     tblRow(lblCell('E-mail'), valCell(emp.email))
-  ]));
+  ], [2700, 6300]));
   sIntro.push(...blank(1));
   
   sIntro.push(tbl([
     titleRow('DADOS DO REPRESENTANTE LEGAL', 2),
-    tblRow(lblCell('Nome Completo', { width: 30 }), valCell(emp.representanteLegal, { width: 70 }))
-  ]));
+    tblRow(lblCell('Nome Completo'), valCell(emp.representanteLegal))
+  ], [2700, 6300]));
   sIntro.push(...blank(1));
   
   sIntro.push(tbl([
     titleRow('ATIVIDADE ECONÔMICA PRINCIPAL', 2),
-    tblRow(lblCell('CNAE Principal', { width: 30 }), valCell(emp.cnae, { width: 70 })),
+    tblRow(lblCell('CNAE Principal'), valCell(emp.cnae)),
     tblRow(lblCell('Atividade'), valCell(emp.atividadeEconomica)),
     tblRow(lblCell('Grau de Risco'), valCell(emp.grauRisco))
-  ]));
+  ], [2700, 6300]));
   sIntro.push(...blank(1));
   
   const funcRows = [
     titleRow('QUADRO DE FUNCIONÁRIOS DA EMPRESA', 4),
-    tblRow(hCell('ID', { width: 10 }), hCell('Setor', { width: 30 }), hCell('Função', { width: 40 }), hCell('Nº Funcionários', { width: 20 }))
+    tblRow(hCell('ID'), hCell('Setor'), hCell('Função'), hCell('Nº Funcionários'))
   ];
   (data.funcionarios || []).forEach((f, i) => {
     funcRows.push(tblRow(cell(String(i + 1).padStart(2, '0'), { align: AlignmentType.CENTER }), valCell(f.setor), valCell(f.funcao), cell(f.numFuncionarios || f.nFuncionarios || '', { align: AlignmentType.CENTER })));
   });
-  sIntro.push(tbl(funcRows));
+  sIntro.push(tbl(funcRows, [900, 2700, 3600, 1800]));
   sIntro.push(...blank(1));
   
   const ambRows = [
     titleRow('DESCRIÇÃO DOS AMBIENTES DE TRABALHO', 2),
-    tblRow(hCell('Setor / Ambiente', { width: 30 }), hCell('Descrição', { width: 70 }))
+    tblRow(hCell('Setor / Ambiente'), hCell('Descrição'))
   ];
   (data.ambientes || []).forEach(a => ambRows.push(tblRow(valCell(a.setor), valCell(a.descricao))));
-  sIntro.push(tbl(ambRows));
+  sIntro.push(tbl(ambRows, [2700, 6300]));
   sIntro.push(...blank(1));
   
   const relRows = [
     titleRow('RELAÇÃO DE FUNÇÕES POR AMBIENTE DE TRABALHO', 2),
-    tblRow(hCell('Ambiente de Trabalho', { width: 35 }), hCell('Funções', { width: 65 }))
+    tblRow(hCell('Ambiente de Trabalho'), hCell('Funções'))
   ];
   (data.ambientes || []).forEach(a => relRows.push(tblRow(valCell(a.setor), valCell(a.funcoes))));
-  sIntro.push(tbl(relRows));
+  sIntro.push(tbl(relRows, [3000, 6000]));
 
   // --- SECTION 3: IRO & EPI (Landscape) ---
   const sIroEpi = [];
@@ -517,7 +527,8 @@ async function generatePGRTR(data) {
         columnSpan: 15, margins: MARGINS, borders: ALL_BORDERS
       })]
     }));
-    sIroEpi.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: gheRows }));
+    const iroColWidths = [800, 1200, 1400, 700, 700, 600, 700, 700, 1000, 2000, 700, 800, 700, 700, 1000];
+    sIroEpi.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, columnWidths: iroColWidths, rows: gheRows }));
     
     // Page break between GHEs
     sIroEpi.push(...blank(1));
@@ -614,13 +625,13 @@ async function generatePGRTR(data) {
   sProcs.push(hdr('MATRIZ DE TREINAMENTOS', `${N.treinamentos}.`));
   const treinRows = [titleRow('TREINAMENTOS APLICÁVEIS', 2), tblRow(hCell('Descrição do Treinamento', { width: 50 }), hCell('Funções / Atividades', { width: 50 }))];
   (data.treinamentos || []).forEach(tr => treinRows.push(tblRow(valCell(tr.descricao), valCell(tr.funcoes))));
-  sProcs.push(tbl(treinRows));
+  sProcs.push(tbl(treinRows, [4500, 4500]));
   
   sProcs.push(...blank(1));
   sProcs.push(hdr('MATRIZ DE DOCUMENTOS', `${N.documentos}.`));
-  const docRows = [titleRow('DOCUMENTOS OBRIGATÓRIOS', 2), tblRow(hCell('Descrição do Documento', { width: 65 }), hCell('Norma de Referência', { width: 35 }))];
+  const docRows = [titleRow('DOCUMENTOS OBRIGATÓRIOS', 2), tblRow(hCell('Descrição do Documento'), hCell('Norma de Referência'))];
   (data.documentos || []).forEach(d => docRows.push(tblRow(valCell(d.descricao), valCell(d.norma))));
-  sProcs.push(tbl(docRows));
+  sProcs.push(tbl(docRows, [5850, 3150]));
 
   // Procedure sections - each gets its own header and content
   const procs = data.procedimentos || {};
@@ -683,7 +694,7 @@ async function generatePGRTR(data) {
     cell(e.anual ? 'X' : '', { align: AlignmentType.CENTER, bold: true }), cell(e.mudancaRisco ? 'X' : '', { align: AlignmentType.CENTER, bold: true }),
     cell(e.retornoTrabalho ? 'X' : '', { align: AlignmentType.CENTER, bold: true })
   )));
-  sPlanos.push(tbl(exRows));
+  sPlanos.push(tbl(exRows, [2000, 2700, 2700, 1365, 980, 980, 980, 980, 980]));
   sPlanos.push(...blank(1));
   
   sPlanos.push(hdr('DANOS À SAÚDE', `${N.danosSaude}.`));
@@ -696,7 +707,7 @@ async function generatePGRTR(data) {
       valCell(r.dano, { align: AlignmentType.CENTER })
     ));
   });
-  sPlanos.push(tbl(dmgRows));
+  sPlanos.push(tbl(dmgRows, [2050, 4100, 7515]));
   sPlanos.push(...blank(1));
   
   sPlanos.push(hdr('CAT – COMUNICAÇÃO DE ACIDENTE DE TRABALHO', `${N.cat}.`));
@@ -706,7 +717,7 @@ async function generatePGRTR(data) {
   } else {
     for (let i = 0; i < 3; i++) catRows.push(tblRow(valCell(''), valCell(''), valCell(''), valCell(''), valCell(''), valCell('')));
   }
-  sPlanos.push(tbl(catRows));
+  sPlanos.push(tbl(catRows, [1500, 1500, 2000, 2500, 3500, 2665]));
   sPlanos.push(...blank(1));
   
   sPlanos.push(hdr('PLANO ANUAL DE AÇÕES', `${N.planoAnual}.`));
@@ -714,7 +725,7 @@ async function generatePGRTR(data) {
   
   const gutRows = [titleRow('Metodologia da Matriz GUT', 4), tblRow(hCell('Nota'), hCell('Gravidade'), hCell('Urgência'), hCell('Tendência'))];
   GUT_ROWS.forEach(g => gutRows.push(tblRow(cell(g.nota, { bold: true, align: AlignmentType.CENTER }), valCell(g.g), valCell(g.u), valCell(g.t))));
-  sPlanos.push(tbl(gutRows));
+  sPlanos.push(tbl(gutRows, [1000, 4221, 4222, 4222]));
   sPlanos.push(...blank(1));
   
   const actRows = [
@@ -761,7 +772,8 @@ async function generatePGRTR(data) {
       valCell(a.responsavel)
     ));
   });
-  sPlanos.push(tbl(actRows));
+  const actColWidths = [1000, 1000, 1000, 1000, 2000, 850, 850, 850, 850, 850, 850, 2565];
+  sPlanos.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, columnWidths: actColWidths, rows: actRows }));
 
   // --- SECTION 6: ENCERRAMENTO (Portrait) ---
   const sEnc = [];
@@ -784,17 +796,14 @@ async function generatePGRTR(data) {
   sEnc.push(pCenter(`${emp.cidade || '[Cidade]'}/${emp.uf || '[UF]'}, ${fmtDate(emp.dataEmissao) || '[DD/MM/AAAA]'}`, { italics: true }));
 
   // ===== BUILD DOCUMENT =====
-  const headerDefault = buildHeader(data);
-  const commonFooter = buildFooter();
-
   const doc = new Document({
     sections: [
       { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, children: sCover },
-      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: headerDefault }, footers: { default: commonFooter }, children: sIntro },
-      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_LANDSCAPE } }, headers: { default: headerDefault }, footers: { default: commonFooter }, children: sIroEpi },
-      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: headerDefault }, footers: { default: commonFooter }, children: sProcs },
-      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_LANDSCAPE } }, headers: { default: headerDefault }, footers: { default: commonFooter }, children: sPlanos },
-      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: headerDefault }, footers: { default: commonFooter }, children: sEnc }
+      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: buildHeader(data) }, footers: { default: buildFooter() }, children: sIntro },
+      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_LANDSCAPE } }, headers: { default: buildHeader(data) }, footers: { default: buildFooter() }, children: sIroEpi },
+      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: buildHeader(data) }, footers: { default: buildFooter() }, children: sProcs },
+      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_LANDSCAPE } }, headers: { default: buildHeader(data) }, footers: { default: buildFooter() }, children: sPlanos },
+      { properties: { page: { margin: PAGE_MARGINS, size: PAGE_PORTRAIT } }, headers: { default: buildHeader(data) }, footers: { default: buildFooter() }, children: sEnc }
     ]
   });
 
